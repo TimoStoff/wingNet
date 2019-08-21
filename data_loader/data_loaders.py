@@ -42,6 +42,21 @@ default_point_orders = {
 }
 
 
+class WingsInferenceDataLoader(BaseDataLoader):
+    def __init__(self, folders_list, batch_size, resize_dims=(256, 256), shuffle=True, validation_split=0.0,
+                 num_workers=1):
+        self.dataset = WingDataInference(get_image_paths(folders_list), resize_dims=resize_dims)
+        super().__init__(self.dataset, batch_size, shuffle, validation_split, num_workers)
+
+
+class WingsTrainingDataLoader(BaseDataLoader):
+    def __init__(self, tps_list, batch_size, resize_dims=(256, 256), shuffle=True, validation_split=0.0,
+                 num_workers=1):
+        image_paths, feature_coords = get_paths_from_tps_file(tps_list)
+        self.dataset = WingDataTraining(image_paths, feature_coords, resize_dims=resize_dims, augment=True)
+        super().__init__(self.dataset, batch_size, shuffle, validation_split, num_workers)
+
+
 class MnistDataLoader(BaseDataLoader):
     """
     MNIST data loading demo using BaseDataLoader
@@ -58,17 +73,15 @@ class MnistDataLoader(BaseDataLoader):
 
 class WingDataInference(Dataset):
 
-    def __init__(self, list_paths, resize_dims=(256, 256), device='cpu'):
+    def __init__(self, list_paths, resize_dims=(256, 256)):
         """
         Dataset for inference (does not require TPS)
         :param list_paths: List of image paths
         :param resize_dims: What size to make images
-        :param device:  Which device to load tensors to
         """
         super().__init__()
 
         self.list_paths = list_paths
-        self.device = device
         self.resize_dims = resize_dims
 
         self.data_transform = transforms.Compose([
@@ -136,7 +149,7 @@ def get_inference_data(folders_list, resize_dims=(256, 256), device="cpu"):
 
 class WingDataTraining(Dataset):
 
-    def __init__(self, list_paths, labels, resize_dims=(256, 256), augment=False, device='cpu'):
+    def __init__(self, list_paths, labels, resize_dims=(256, 256), augment=False):
         """
         Dataset for training
         :param list_paths: List of image paths
@@ -149,7 +162,6 @@ class WingDataTraining(Dataset):
 
         self.list_paths = list_paths
         self.labels = labels
-        self.device = device
         self.resize_dims = resize_dims
         self.keypoint_divisor = np.array([resize_dims[0], resize_dims[1], resize_dims[0], resize_dims[1],
                                           resize_dims[0], resize_dims[1], resize_dims[0], resize_dims[1],
