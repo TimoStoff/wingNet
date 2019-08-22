@@ -5,6 +5,7 @@ import numpy as np
 import os, glob
 import pandas as pd
 import re
+from pathlib import Path
 
 #Data management
 from torch.utils.data import Dataset
@@ -117,19 +118,18 @@ class WingDataInference(Dataset):
         return input_tensor, sample_path
 
 
-def get_image_paths(data_path):
+def get_image_paths(folders_list):
     """
     Get all images in a given folder
-    :param data_path: The folder from which to scrape images
+    :param data_path: The list of folders from which to scrape images
     :return: List of images in data_path
     """
     image_paths = []
-    paths = glob.glob(data_path+'/*.tif')
-    paths.extend(glob.glob(data_path+'/*.bmp'))
-    paths.extend(glob.glob(data_path+'/*.png'))
-    paths.extend(glob.glob(data_path+'/*.jpg'))
-    for path in paths:
-        image_paths.append(path)
+    for data_path in folders_list:
+        for ext in ('*.tif', '*.bmp', '*.png', '*.jpg'):
+            for filename in Path(data_path).glob(ext):
+                image_paths.append(str(filename))
+    image_paths.sort()
     return image_paths
 
 

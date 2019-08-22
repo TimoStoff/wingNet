@@ -18,6 +18,7 @@ def main(config):
 
     # build model architecture, then print to console
     model = config.initialize('arch', module_arch)
+    model = getattr(module_arch, 'arch')
     logger.info(model)
 
     # get function handles of loss and metrics

@@ -1,6 +1,9 @@
 import torch.nn as nn
 
-criterion = nn.MSELoss()
+
+def mse_loss(output, target):
+    loss = nn.MSELoss(output, target)
+    return loss
 
 
 def find_best_orientation(kpts_gt, kpts_est, difference_thresh=0.5):
@@ -15,24 +18,24 @@ def find_best_orientation(kpts_gt, kpts_est, difference_thresh=0.5):
         tmp = kpts_est[batch].clone()
 
         # no flip
-        min_loss = criterion(kpts_gt[batch], tmp)
+        min_loss = mse_loss(kpts_gt[batch], tmp)
         original_loss = min_loss
         min_op = "identity"
         # horizontal flip
         tmp[0::2] = 1.0 - tmp[0::2]
-        loss = criterion(kpts_gt[batch], tmp)
+        loss = mse_loss(kpts_gt[batch], tmp)
         if loss < (min_loss * difference_thresh):
             min_loss = loss
             min_op = "hor"
         # horizontal and vertical flip
         tmp[1::2] = 1.0 - tmp[1::2]
-        loss = criterion(kpts_gt[batch], tmp)
+        loss = mse_loss(kpts_gt[batch], tmp)
         if loss < (min_loss * difference_thresh):
             min_loss = loss
             min_op = "hor_ver"
         # vertical flip
         tmp[0::2] = 1.0 - tmp[0::2]
-        loss = criterion(kpts_gt[batch], tmp)
+        loss = mse_loss(kpts_gt[batch], tmp)
         if loss < (min_loss * difference_thresh):
             min_loss = loss
             min_op = "ver"
