@@ -43,10 +43,16 @@ default_point_orders = {
 }
 
 
+# class WingsInferenceDataLoader(BaseDataLoader):
+#     def __init__(self, folders_list, batch_size, resize_dims=(256, 256), shuffle=True, validation_split=0.0,
+#                  num_workers=1):
+#         self.dataset = WingDataInference(get_image_paths(folders_list), resize_dims=resize_dims)
+#         super().__init__(self.dataset, batch_size, shuffle, validation_split, num_workers)
+
 class WingsInferenceDataLoader(BaseDataLoader):
-    def __init__(self, folders_list, batch_size, resize_dims=(256, 256), shuffle=True, validation_split=0.0,
+    def __init__(self, image_list, batch_size, resize_dims=(256, 256), shuffle=True, validation_split=0.0,
                  num_workers=1):
-        self.dataset = WingDataInference(get_image_paths(folders_list), resize_dims=resize_dims)
+        self.dataset = WingDataInference(image_list, resize_dims=resize_dims)
         super().__init__(self.dataset, batch_size, shuffle, validation_split, num_workers)
 
 

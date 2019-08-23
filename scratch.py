@@ -1,131 +1,95 @@
-#!/usr/bin/env python
-#-*- coding:utf-8 -*-
-
-import sip
-sip.setapi('QString', 2)
-
+import sys
 from PySide2 import QtCore, QtGui, QtWidgets
 
-myMimeType = 'application/MyWindow'
+# class Window(QtWidgets.QWidget):
+#     def __init__(self):
+#         super(Window, self).__init__()
+#         self.scroll = QtWidgets.QScrollArea()
+#         self.scroll.setWidgetResizable(True)
+#         layout = QtWidgets.QVBoxLayout(self)
+#         layout.addWidget(self.scroll)
+#         widget = QtWidgets.QWidget()
+#         layout = QtWidgets.QVBoxLayout(widget)
+#         for text in 'red green yellow purple orange blue'.split():
+#             item = QtWidgets.QFrame()
+#             item.setObjectName(text)
+#             item.setStyleSheet('background-color: %s' % text)
+#             layout.addWidget(item)
+#         self.scroll.setWidget(widget)
+#         self._lastpos = None
+#
+#     def mousePressEvent(self, event):
+#         self._lastpos = event.pos()
+#
+#     def mouseReleaseEvent(self, event):
+#         widget = self.childAt(event.pos())
+#         if (widget is not None and self._lastpos is not None and
+#             widget is self.childAt(self._lastpos)):
+#             if widget.objectName():
+#                 print('click:', widget.objectName())
+#         self._lastpos = None
+#
+#     def mouseDoubleClickEvent(self, event):
+#         widget = self.childAt(event.pos())
+#         if widget is not None and widget.objectName():
+#             print('dblclick:', widget.objectName())
+#
+# if __name__ == '__main__':
+#
+#     app = QtWidgets.QApplication(sys.argv)
+#     window = Window()
+#     window.setGeometry(600, 100, 300, 400)
+#     window.show()
+#     sys.exit(app.exec_())
 
-class MyLabel(QtWidgets.QLabel):
-    def __init__(self, parent):
-        super(MyLabel, self).__init__(parent)
+import math
+import sys
 
-        self.setStyleSheet("""
-            background-color: black;
-            color: white;
-            font: bold;
-            padding: 6px;
-            border-width: 2px;
-            border-style: solid;
-            border-radius: 16px;
-            border-color: white;
-        """)
+from PySide2.QtCore import *
+from PySide2.QtGui import *
+from PySide2.QtWidgets import *
 
-    def mousePressEvent(self, event):
-        itemData   = QtCore.QByteArray()
-        dataStream = QtCore.QDataStream(itemData, QtCore.QIODevice.WriteOnly)
-        dataStream.writeString(self.text())
-        dataStream << QtCore.QPoint(event.pos() - self.rect().topLeft())
+img_path = "/home/timo/Data2/wings/clem_wings/clem_wings/A.F1_NS.xch/A.f1ns.118.1.tif"
 
-        mimeData = QtCore.QMimeData()
-        mimeData.setData(myMimeType, itemData)
-        mimeData.setText(self.text())
-
-        drag = QtWidgets.QDrag(self)
-        drag.setMimeData(mimeData)
-        drag.setHotSpot(event.pos() - self.rect().topLeft())
-
-        self.hide()
-
-        if drag.exec_(QtCore.Qt.MoveAction | QtCore.Qt.CopyAction, QtCore.Qt.CopyAction) == QtCore.Qt.MoveAction:
-            self.close()
-
-        else:
-            self.show()
-
-
-class MyFrame(QtWidgets.QFrame):
+class Widget(QWidget):
     def __init__(self, parent=None):
-        super(MyFrame, self).__init__(parent)
+        QWidget.__init__(self, parent)
 
-        self.setStyleSheet("""
-            background-color: lightgray;
-            border-width: 2px;
-            border-style: solid;
-            border-color: black;
-            margin: 2px;
-        """)
+        self.btn = QPushButton("Add Line")
 
-        y = 6
-        for labelNumber in range(6):
-            label = MyLabel(self)
-            label.setText("Label #{0}".format(labelNumber))
-            label.move(6, y)
-            label.show()
+        self.gv = QGraphicsView()
+        self.scene = QGraphicsScene(self)
+        self.gv.setScene(self.scene)
+        self.gv.setRenderHints(QPainter.Antialiasing | QPainter.SmoothPixmapTransform)
 
-            y += label.height() + 2
+        lay = QHBoxLayout(self)
+        lay.addWidget(self.btn)
+        lay.addWidget(self.gv)
 
-        self.setAcceptDrops(True)
+        self.p_item = self.scene.addPixmap(QPixmap(img_path))
+        self.btn.clicked.connect(self.add_line)
 
-    def dragEnterEvent(self, event):
-        if event.mimeData().hasFormat(myMimeType):
-            if event.source() in self.children():
-                event.setDropAction(QtCore.Qt.MoveAction)
-                event.accept()
 
-            else:
-                event.acceptProposedAction()
+    def add_line(self):
+        p1 = self.p_item.boundingRect().topLeft()
+        p2 = self.p_item.boundingRect().center()
+        circ = QGraphicsEllipseItem(100, 100, 50, 50, self.p_item)
+        circ.setPen(QPen(Qt.red, 5))
+        circ.setFlag(QGraphicsItem.ItemIsMovable, True)
+        circ.setFlag(QGraphicsItem.ItemIsSelectable, True)
+        # line = QGraphicsLineItem(QLineF(p1, p2), self.p_item)
+        # line.setPen(QPen(Qt.red, 5))
+        # line.setFlag(QGraphicsItem.ItemIsMovable, True)
+        # line.setFlag(QGraphicsItem.ItemIsSelectable, True)
+        self.gv.fitInView(self.scene.sceneRect())
 
-        else:
-            event.ignore()
 
-    def dropEvent(self, event):
-        if event.mimeData().hasFormat(myMimeType):
-            mime       = event.mimeData()
-            itemData   = mime.data(myMimeType)
-            dataStream = QtCore.QDataStream(itemData, QtCore.QIODevice.ReadOnly)
-
-            text = QtCore.QByteArray()
-            offset = QtCore.QPoint()
-            dataStream >> text >> offset
-
-            newLabel = MyLabel(self)
-            newLabel.setText(event.mimeData().text())
-            newLabel.move(event.pos() - offset)
-            newLabel.show()
-
-            if event.source() in self.children():
-                event.setDropAction(QtCore.Qt.MoveAction)
-                event.accept()
-
-            else:
-                event.acceptProposedAction()
-
-        else:
-            event.ignore()
-
-class MyWindow(QtWidgets.QMainWindow):
-    def __init__(self, parent=None):
-        super(MyWindow, self).__init__(parent)
-
-        self.myFrame = MyFrame(self)
-
-        self.setCentralWidget(self.myFrame)
-
-if __name__ == "__main__":
-    import sys
-
-    app = QtWidgets.QApplication(sys.argv)
-    app.setApplicationName('MyWindow')
-
-    main = MyWindow()
-    main.resize(333, 333)
-    main.move(app.desktop().screen().rect().center() - main.rect().center())
-    main.show()
-
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    w = Widget()
+    w.show()
     sys.exit(app.exec_())
+
 
 # # embedding_in_qt5.py --- Simple Qt5 application embedding matplotlib canvases
 # #
