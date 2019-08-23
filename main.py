@@ -15,6 +15,7 @@ from matplotlib.figure import Figure
 
 import numpy as np
 import cv2 as cv
+import pandas as pd
 
 img_default_size = (512, 512)
 NORM_FACTOR = [10, 10, 10, 10, 10, 10, 10, 10,
@@ -108,6 +109,7 @@ class WingNet(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
         self.gv_wing_image.setRenderHints(QPainter.Antialiasing | QPainter.SmoothPixmapTransform)
 
         self.actionSet_Scale.triggered.connect(self.add_scale)
+        self.actionExport_CSV.triggered.connect(self.save_csv)
         self.btn_label_wings.setEnabled(False)
         self.btn_label_wings.clicked.connect(self.process_wings)
         self.tableWidget.itemSelectionChanged.connect(self.selection_changed)
@@ -212,7 +214,6 @@ class WingNet(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
         self.tableWidget.setItem(row, 1, QTableWidgetItem(str(area)))
 
     def add_scale(self):
-        print("dialog")
         text, ok = QInputDialog.getText(self, 'Set Scale', 'Set Scale (pixels/mm):')
         if ok:
             self.scale = 1.0/float(text)
@@ -226,6 +227,12 @@ class WingNet(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
                 for i in range(0, len(self.wing_result), 1):
                     self.wing_result[i][self.scale_idx] = self.scale
                     self.tableWidget.setItem(i, 2, QTableWidgetItem(str(1.0/self.scale)))
+
+    def save_csv(self):
+        filename = QFileDialog.getSaveFileName(self, "Save file", "", ".csv")
+
+        print(filename)
+
 
 def main():
     app = QtWidgets.QApplication(sys.argv)
