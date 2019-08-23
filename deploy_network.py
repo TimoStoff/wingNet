@@ -51,13 +51,12 @@ class WingKeypointsGenerator():
         y = np.array(points[1::2])*norm_factor[1::2]
         return 0.5 * np.abs(np.dot(x, np.roll(y, 1)) - np.dot(y, np.roll(x, 1)))
 
-    def process_images(self, norm_factor):
+    def process_images(self):
         results = []
         for batch_idx, (data, names) in enumerate(self.data_loader):
             keypoints = self.pass_forward(data, self.model, self.device)
             for name, keypoint in zip(names, keypoints):
-                area = self.shoelace_polygon_area(keypoint, norm_factor)
-                results.append([name, keypoint, area])
+                results.append([name, keypoint])
         return results
 
 # def area_triangle(triangle_points):
@@ -92,4 +91,3 @@ class WingKeypointsGenerator():
 # print(out_list)
 # results = pd.DataFrame(output_list, columns=['image_path', 'keypoints'])
 # print(image_list)
-

@@ -20,7 +20,7 @@
       <property name="orientation">
        <enum>Qt::Horizontal</enum>
       </property>
-      <widget class="QWidget" name="">
+      <widget class="QWidget" name="layoutWidget">
        <layout class="QVBoxLayout" name="verticalLayout">
         <item>
          <widget class="QGraphicsView" name="gv_wing_image"/>
@@ -95,14 +95,14 @@
     <addaction name="actionSave_Project"/>
     <addaction name="actionExport_CSV"/>
    </widget>
-   <widget class="QMenu" name="menuEdit">
+   <widget class="QMenu" name="menuTools">
     <property name="title">
-     <string>Edit</string>
+     <string>Tools</string>
     </property>
     <addaction name="actionSet_Scale"/>
    </widget>
    <addaction name="menuFile"/>
-   <addaction name="menuEdit"/>
+   <addaction name="menuTools"/>
   </widget>
   <action name="actionAdd_Wings">
    <property name="text">
@@ -114,11 +114,6 @@
     <string>Open Existing Project</string>
    </property>
   </action>
-  <action name="actionSet_Scale">
-   <property name="text">
-    <string>Set Scale</string>
-   </property>
-  </action>
   <action name="actionSave_Project">
    <property name="text">
     <string>Save Project</string>
@@ -127,6 +122,16 @@
   <action name="actionExport_CSV">
    <property name="text">
     <string>Export CSV</string>
+   </property>
+  </action>
+  <action name="actionSet_Scale">
+   <property name="text">
+    <string>Set Scale</string>
+   </property>
+  </action>
+  <action name="actionTest">
+   <property name="text">
+    <string>Test</string>
    </property>
   </action>
  </widget>

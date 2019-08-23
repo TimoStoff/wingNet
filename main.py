@@ -92,7 +92,13 @@ class WingNet(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
         self.setupUi(self)
         self.folder_list = []
         self.image_paths = []
+        # wing_result contains 0: image path, 1: keypoints array, 2: scale 3: area and 4: image size
         self.wing_result = []
+        self.path_idx = 0
+        self.kpts_idx = 1
+        self.scale_idx = 2
+        self.area_idx = 3
+        self.size_idx = 4
         self.image_current_size = img_default_size
         self.slider_image_size.setValue(img_default_size[0])
         self.scale = 1.0
@@ -101,18 +107,19 @@ class WingNet(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
         self.gv_wing_image.setScene(self.scene)
         self.gv_wing_image.setRenderHints(QPainter.Antialiasing | QPainter.SmoothPixmapTransform)
 
+        self.actionSet_Scale.triggered.connect(self.add_scale)
         self.btn_label_wings.setEnabled(False)
         self.btn_label_wings.clicked.connect(self.process_wings)
-        self.actionAdd_Wings.triggered.connect(self.browse_folders)
         self.tableWidget.itemSelectionChanged.connect(self.selection_changed)
         self.slider_image_size.valueChanged.connect(self.resize_image)
-        self.actionSet_Scale.triggered.connect(self.set_scale())
+        self.actionAdd_Wings.triggered.connect(self.browse_folders)
 
         header = self.tableWidget.horizontalHeader()
         header.setSectionResizeMode(0, QtWidgets.QHeaderView.Stretch)
         header.setSectionResizeMode(1, QtWidgets.QHeaderView.ResizeToContents)
 
     def browse_folders(self):
+        print("browse")
         self.tableWidget.clear()
 
         file_dialog = QtWidgets.QFileDialog()
@@ -135,10 +142,11 @@ class WingNet(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
             for image_path in self.image_paths:
                 row_position = self.tableWidget.rowCount()
                 self.tableWidget.insertRow(row_position)
-                self.wing_result.append([image_path, [], "-"])
+                image = cv.imread(image_path)
+                self.wing_result.append([image_path, [], self.scale, 0, (image.shape[0], image.shape[1])])
                 self.tableWidget.setItem(row_position, 0, QTableWidgetItem(image_path))
                 self.tableWidget.setItem(row_position, 1, QTableWidgetItem("-"))
-                self.tableWidget.setItem(row_position, 2, QTableWidgetItem("-"))
+                self.tableWidget.setItem(row_position, 2, QTableWidgetItem(str(1.0/self.scale)))
 
         self.btn_label_wings.setEnabled(True)
 
@@ -164,44 +172,60 @@ class WingNet(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
 
     def update_table(self):
         for result, index in zip(self.wing_result, range(0, len(self.wing_result), 1)):
-            print("{}: {} = {}".format(result[0], result[1], result[2]))
-            self.tableWidget.setItem(index, 0, QTableWidgetItem(str(result[0])))
-            self.tableWidget.setItem(index, 1, QTableWidgetItem(str(result[2])))
-            self.tableWidget.setItem(index, 2, QTableWidgetItem(str(1)))
+            # print("{}: {} = {}".format(result[0], result[1], result[2]))
+            self.tableWidget.setItem(index, 0, QTableWidgetItem(str(result[self.path_idx])))
+            self.tableWidget.setItem(index, 1, QTableWidgetItem(str(result[self.area_idx])))
+            self.tableWidget.setItem(index, 2, QTableWidgetItem(str(result[1.0/self.scale_idx])))
 
     def process_wings(self):
         print("Process wings")
         keypoint_generator = wing_net.WingKeypointsGenerator(self.image_paths)
-        self.wing_result = keypoint_generator.process_images(NORM_FACTOR)
+        output = keypoint_generator.process_images()
+        for i in range(len(output)):
+            self.wing_result[i][self.kpts_idx] = output[i][self.kpts_idx]
+            norm_factor = (self.wing_result[i][self.size_idx][0]*self.wing_result[i][self.scale_idx],
+                           self.wing_result[i][self.size_idx][1]*self.wing_result[i][self.scale_idx])
+            self.wing_result[i][self.area_idx] = self.shoelace_polygon_area(
+                self.wing_result[i][self.kpts_idx], norm_factor)
         self.update_table()
 
     def resize_image(self):
-        # print(self.slider_image_size.value())
         self.image_current_size = (self.slider_image_size.value(), self.slider_image_size.value())
         self.selection_changed()
 
-    def shoelace_polygon_area(self, points, norm_factor):
-        x = np.array(points[0::2])*norm_factor[0::2]
-        y = np.array(points[1::2])*norm_factor[1::2]
+    @staticmethod
+    def shoelace_polygon_area(points, norm_factor):
+        x = np.array(points[0::2])*norm_factor[0]
+        y = np.array(points[1::2])*norm_factor[1]
         return 0.5 * np.abs(np.dot(x, np.roll(y, 1)) - np.dot(y, np.roll(x, 1)))
 
     def update_keypoints(self, kpts):
-        kpts[0::2] = [x/self.image_current_size[0] for x in kpts[0::2]]
-        kpts[1::2] = [x/self.image_current_size[1] for x in kpts[1::2]]
         row = self.tableWidget.currentIndex().row()
 
-        self.wing_result[row][1] = kpts
-        area = self.shoelace_polygon_area(kpts, NORM_FACTOR)
+        kpts[0::2] = [x/self.image_current_size[0] for x in kpts[0::2]]
+        kpts[1::2] = [x/self.image_current_size[1] for x in kpts[1::2]]
+
+        self.wing_result[row][self.kpts_idx] = kpts
+        norm_factor = (self.wing_result[row][self.size_idx][0] * self.wing_result[row][self.scale_idx],
+                       self.wing_result[row][self.size_idx][1] * self.wing_result[row][self.scale_idx])
+        area = self.shoelace_polygon_area(kpts, norm_factor)
         self.tableWidget.setItem(row, 1, QTableWidgetItem(str(area)))
 
-    def set_scale(self):
-        print("hi")
-        # text, ok = QInputDialog.getText(self, 'Set Scale', 'Set Scale (pixels/mm):')
-        # if ok:
-        #     self.scale(float(text))
-        # print(text)
-
-
+    def add_scale(self):
+        print("dialog")
+        text, ok = QInputDialog.getText(self, 'Set Scale', 'Set Scale (pixels/mm):')
+        if ok:
+            self.scale = 1.0/float(text)
+            print(self.scale)
+            rows = self.tableWidget.selectedIndexes()
+            if rows:
+                for row in rows:
+                    self.wing_result[row.row()][self.scale_idx] = self.scale
+                    self.tableWidget.setItem(row.row(), 2, QTableWidgetItem(str(1.0/self.scale)))
+            else:
+                for i in range(0, len(self.wing_result), 1):
+                    self.wing_result[i][self.scale_idx] = self.scale
+                    self.tableWidget.setItem(i, 2, QTableWidgetItem(str(1.0/self.scale)))
 
 def main():
     app = QtWidgets.QApplication(sys.argv)
