@@ -94,12 +94,13 @@ class WingNet(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
         self.folder_list = []
         self.image_paths = []
         # wing_result contains 0: image path, 1: keypoints array, 2: scale 3: area and 4: image size
-        self.wing_result = []
-        self.path_idx = 0
-        self.kpts_idx = 1
-        self.scale_idx = 2
-        self.area_idx = 3
-        self.size_idx = 4
+        # self.wing_result = []
+        # self."path" = 0
+        # self."keypoints" = 1
+        # self."scale" = 2
+        # self."area" = 3
+        # self."image_size" = 4
+        self.wing_result = pd.DataFrame(columns=['path', 'keypoints', 'scale', 'area', 'image_size'])
         self.image_current_size = img_default_size
         self.slider_image_size.setValue(img_default_size[0])
         self.scale = 1.0
@@ -145,55 +146,66 @@ class WingNet(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
                 row_position = self.tableWidget.rowCount()
                 self.tableWidget.insertRow(row_position)
                 image = cv.imread(image_path)
-                self.wing_result.append([image_path, [], self.scale, 0, (image.shape[0], image.shape[1])])
+                self.wing_result.loc[len(self.wing_result)] = [image_path, [], self.scale, 0, (image.shape[0], image.shape[1])]
+                # self.wing_result.append([image_path, [], self.scale, 0, (image.shape[0], image.shape[1])])
                 self.tableWidget.setItem(row_position, 0, QTableWidgetItem(image_path))
                 self.tableWidget.setItem(row_position, 1, QTableWidgetItem("-"))
                 self.tableWidget.setItem(row_position, 2, QTableWidgetItem(str(1.0/self.scale)))
-
+        for index, item in self.wing_result.iterrows():
+            item["area"] = index
+            # print(item["path"])
+        # self.wing_result.at[3, "path"] = "hello"
+        print(self.wing_result)
         self.btn_label_wings.setEnabled(True)
 
     def selection_changed(self):
-        if self.tableWidget.currentColumn() is 0:
-            selected = self.tableWidget.selectedItems()[0].text()
-            row = self.tableWidget.currentIndex().row()
-            print(selected)
-            image = cv.imread(selected)
-            image = cv.resize(image, self.image_current_size)
-            height, width, channel = image.shape
-            bytes_per_line = 3 * width
-            q_img = QtGui.QImage(image.data, width, height, bytes_per_line, QtGui.QImage.Format_RGB888).rgbSwapped()
-            pixmap = QtGui.QPixmap.fromImage(q_img)
+        # if self.tableWidget.currentColumn() is 0:
+        row = self.tableWidget.currentIndex().row()
+        selected = self.tableWidget.item(row, 0).text()
+        print(selected)
+        image = cv.imread(selected)
+        image = cv.resize(image, self.image_current_size)
+        height, width, channel = image.shape
+        bytes_per_line = 3 * width
+        q_img = QtGui.QImage(image.data, width, height, bytes_per_line, QtGui.QImage.Format_RGB888).rgbSwapped()
+        pixmap = QtGui.QPixmap.fromImage(q_img)
 
-            self.scene.clear()
-            p_item = self.scene.addPixmap(pixmap)
-            self.scene.give_pitem(p_item)
+        self.scene.clear()
+        p_item = self.scene.addPixmap(pixmap)
+        self.scene.give_pitem(p_item)
 
-            kpts = self.wing_result[row][1]
-            if len(kpts) == 16:
-                self.scene.draw_keypoints(kpts, self.image_current_size)
+        kpts = self.wing_result.at[row, "keypoints"]
+        if len(kpts) == 16:
+            self.scene.draw_keypoints(kpts, self.image_current_size)
 
     def update_table(self):
-        for result, index in zip(self.wing_result, range(0, len(self.wing_result), 1)):
+        for index, result in self.wing_result.iterrows():
             # print("{}: {} = {}".format(result[0], result[1], result[2]))
-            self.tableWidget.setItem(index, 0, QTableWidgetItem(str(result[self.path_idx])))
-            self.tableWidget.setItem(index, 1, QTableWidgetItem(str(result[self.area_idx])))
-            self.tableWidget.setItem(index, 2, QTableWidgetItem(str(result[1.0/self.scale_idx])))
+            self.tableWidget.setItem(index, 0, QTableWidgetItem(str(result["path"])))
+            self.tableWidget.setItem(index, 1, QTableWidgetItem(str(result["area"])))
+            self.tableWidget.setItem(index, 2, QTableWidgetItem(str(1.0/result["scale"])))
 
     def process_wings(self):
         print("Process wings")
         keypoint_generator = wing_net.WingKeypointsGenerator(self.image_paths)
         output = keypoint_generator.process_images()
         for i in range(len(output)):
-            self.wing_result[i][self.kpts_idx] = output[i][self.kpts_idx]
-            norm_factor = (self.wing_result[i][self.size_idx][0]*self.wing_result[i][self.scale_idx],
-                           self.wing_result[i][self.size_idx][1]*self.wing_result[i][self.scale_idx])
-            self.wing_result[i][self.area_idx] = self.shoelace_polygon_area(
-                self.wing_result[i][self.kpts_idx], norm_factor)
+            # print(self.wing_result.at[i, "keypoints"])
+            # print(output[i][1])
+            self.wing_result.at[i, "keypoints"] = output[i][1]
+            area = self.compute_area(i)
+            self.wing_result.at[i, "area"] = area
         self.update_table()
 
     def resize_image(self):
         self.image_current_size = (self.slider_image_size.value(), self.slider_image_size.value())
         self.selection_changed()
+
+    def compute_area(self, idx):
+        norm_factor = (self.wing_result.at[idx, "image_size"][0] * self.wing_result.at[idx, "scale"],
+                       self.wing_result.at[idx, "image_size"][1] * self.wing_result.at[idx, "scale"])
+        # print(norm_factor)
+        return self.shoelace_polygon_area(self.wing_result.at[idx, "keypoints"], norm_factor)
 
     @staticmethod
     def shoelace_polygon_area(points, norm_factor):
@@ -207,10 +219,8 @@ class WingNet(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
         kpts[0::2] = [x/self.image_current_size[0] for x in kpts[0::2]]
         kpts[1::2] = [x/self.image_current_size[1] for x in kpts[1::2]]
 
-        self.wing_result[row][self.kpts_idx] = kpts
-        norm_factor = (self.wing_result[row][self.size_idx][0] * self.wing_result[row][self.scale_idx],
-                       self.wing_result[row][self.size_idx][1] * self.wing_result[row][self.scale_idx])
-        area = self.shoelace_polygon_area(kpts, norm_factor)
+        area = self.compute_area(row)
+        self.wing_result.at[row, "area"] = area
         self.tableWidget.setItem(row, 1, QTableWidgetItem(str(area)))
 
     def add_scale(self):
@@ -221,17 +231,20 @@ class WingNet(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
             rows = self.tableWidget.selectedIndexes()
             if rows:
                 for row in rows:
-                    self.wing_result[row.row()][self.scale_idx] = self.scale
-                    self.tableWidget.setItem(row.row(), 2, QTableWidgetItem(str(1.0/self.scale)))
+                    self.wing_result.at[row.row(), "scale"] = self.scale
+                    self.wing_result.at[row.row(), "area"] = self.compute_area(row.row())
             else:
                 for i in range(0, len(self.wing_result), 1):
-                    self.wing_result[i][self.scale_idx] = self.scale
-                    self.tableWidget.setItem(i, 2, QTableWidgetItem(str(1.0/self.scale)))
+                    self.wing_result.at[i, "scale"] = self.scale
+                    self.wing_result.at[i, "area"] = self.compute_area(i)
+            self.update_table()
 
     def save_csv(self):
         filename = QFileDialog.getSaveFileName(self, "Save file", "", ".csv")
 
         print(filename)
+        path = filename[0]+filename[1]
+        self.wing_result.to_csv(path, mode='w', columns=['path','keypoints','scale','area'], index=False)
 
 
 def main():
