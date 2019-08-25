@@ -140,6 +140,11 @@
     <string>Load Model</string>
    </property>
   </action>
+  <action name="actionLoad_Project">
+   <property name="text">
+    <string>Load Project</string>
+   </property>
+  </action>
  </widget>
  <resources/>
  <connections/>

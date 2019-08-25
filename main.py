@@ -15,6 +15,7 @@ from matplotlib.figure import Figure
 
 import numpy as np
 import cv2 as cv
+from PIL import Image
 import pandas as pd
 
 img_default_size = (512, 512)
@@ -30,7 +31,6 @@ class WingSceneWidget(QtWidgets.QGraphicsScene):
         self.circ_radius = 5
 
     def mouseDoubleClickEvent(self, event):
-        print("New Annotation")
         self.annotating = True
         self.keypoints = []
         self.remove_all_circles()
@@ -57,7 +57,7 @@ class WingSceneWidget(QtWidgets.QGraphicsScene):
         for item in self.items():
             if isinstance(item, QGraphicsEllipseItem):
                 c_pt = item.pos()
-                kpts.extend((c_pt.x(), c_pt.y()))
+                kpts.extend((c_pt.x()+self.circ_radius, c_pt.y()+self.circ_radius))
         if len(kpts) == 16:
             self.parent().update_keypoints(kpts)
 
@@ -67,6 +67,9 @@ class WingSceneWidget(QtWidgets.QGraphicsScene):
             QtWidgets.QGraphicsScene.mouseReleaseEvent(self, event)
             self.update_keypoints()
             return
+
+    def keyPressEvent(self, e):
+        self.parent().image_selected_key_event(e)
 
     def give_pitem(self, p_item):
         self.p_item = p_item
@@ -93,40 +96,46 @@ class WingNet(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
         self.setupUi(self)
         self.folder_list = []
         self.image_paths = []
-        # wing_result contains 0: image path, 1: keypoints array, 2: scale 3: area and 4: image size
-        # self.wing_result = []
-        # self."path" = 0
-        # self."keypoints" = 1
-        # self."scale" = 2
-        # self."area" = 3
-        # self."image_size" = 4
+        self.autosave_path = ".tmp_project.wings"
+
         self.wing_result = pd.DataFrame(columns=['path', 'keypoints', 'scale', 'area', 'image_size'])
         self.image_current_size = img_default_size
         self.slider_image_size.setValue(img_default_size[0])
         self.scale = 1.0
+        self.model_path = "/home/timo/Data2/wingNet_models/wings_resnet34_weights"
+        self.model_path = self.check_if_file_exists(self.model_path, "", message="Please Load Model")
+        print("Loading model from {}".format(self.model_path))
 
         self.scene = WingSceneWidget(self)
         self.gv_wing_image.setScene(self.scene)
         self.gv_wing_image.setRenderHints(QPainter.Antialiasing | QPainter.SmoothPixmapTransform)
 
+        self.menuBar.setNativeMenuBar(False)
         self.actionSet_Scale.triggered.connect(self.add_scale)
+        self.actionLoad_Model.triggered.connect(self.load_model_dialog)
         self.actionExport_CSV.triggered.connect(self.save_csv)
         self.btn_label_wings.setEnabled(False)
         self.btn_label_wings.clicked.connect(self.process_wings)
         self.tableWidget.itemSelectionChanged.connect(self.selection_changed)
         self.slider_image_size.valueChanged.connect(self.resize_image)
         self.actionAdd_Wings.triggered.connect(self.browse_folders)
+        self.actionSave_Project.triggered.connect(self.save_project_dialog)
+        self.actionOpen_Existing_Project.triggered.connect(self.load_project_dialog)
 
         header = self.tableWidget.horizontalHeader()
         header.setSectionResizeMode(0, QtWidgets.QHeaderView.Stretch)
         header.setSectionResizeMode(1, QtWidgets.QHeaderView.ResizeToContents)
 
+        self.load_project(self.autosave_path)
+
     def browse_folders(self):
         print("browse")
         self.tableWidget.clear()
 
+        filters = [".png, .xpm, .jpg"]
         file_dialog = QtWidgets.QFileDialog()
         file_dialog.setFileMode(QtWidgets.QFileDialog.DirectoryOnly)
+        file_dialog.setNameFilter("JPG (*.jpg)")
         file_dialog.setOption(QtWidgets.QFileDialog.DontUseNativeDialog, True)
         file_view = file_dialog.findChild(QtWidgets.QListView, 'listView')
 
@@ -145,9 +154,9 @@ class WingNet(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
             for image_path in self.image_paths:
                 row_position = self.tableWidget.rowCount()
                 self.tableWidget.insertRow(row_position)
-                image = cv.imread(image_path)
-                self.wing_result.loc[len(self.wing_result)] = [image_path, [], self.scale, 0, (image.shape[0], image.shape[1])]
-                # self.wing_result.append([image_path, [], self.scale, 0, (image.shape[0], image.shape[1])])
+                image = Image.open(image_path)
+                self.wing_result.loc[len(self.wing_result)] = [image_path, [], self.scale, 0,
+                                                               (image.size[0], image.size[1])]
                 self.tableWidget.setItem(row_position, 0, QTableWidgetItem(image_path))
                 self.tableWidget.setItem(row_position, 1, QTableWidgetItem("-"))
                 self.tableWidget.setItem(row_position, 2, QTableWidgetItem(str(1.0/self.scale)))
@@ -162,7 +171,6 @@ class WingNet(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
         # if self.tableWidget.currentColumn() is 0:
         row = self.tableWidget.currentIndex().row()
         selected = self.tableWidget.item(row, 0).text()
-        print(selected)
         image = cv.imread(selected)
         image = cv.resize(image, self.image_current_size)
         height, width, channel = image.shape
@@ -175,19 +183,22 @@ class WingNet(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
         self.scene.give_pitem(p_item)
 
         kpts = self.wing_result.at[row, "keypoints"]
+        # print("kpts={}, len={}".format(kpts, len(kpts)))
         if len(kpts) == 16:
+            # print("draw kpts")
             self.scene.draw_keypoints(kpts, self.image_current_size)
 
     def update_table(self):
         for index, result in self.wing_result.iterrows():
-            # print("{}: {} = {}".format(result[0], result[1], result[2]))
+            # print("{}: {} = {}".format(result["path"], result["scale"], result["area"]))
             self.tableWidget.setItem(index, 0, QTableWidgetItem(str(result["path"])))
             self.tableWidget.setItem(index, 1, QTableWidgetItem(str(result["area"])))
             self.tableWidget.setItem(index, 2, QTableWidgetItem(str(1.0/result["scale"])))
+        self.save_project(self.autosave_path)
 
     def process_wings(self):
         print("Process wings")
-        keypoint_generator = wing_net.WingKeypointsGenerator(self.image_paths)
+        keypoint_generator = wing_net.WingKeypointsGenerator(self.image_paths, model_path=self.model_path)
         output = keypoint_generator.process_images()
         for i in range(len(output)):
             # print(self.wing_result.at[i, "keypoints"])
@@ -201,27 +212,31 @@ class WingNet(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
         self.image_current_size = (self.slider_image_size.value(), self.slider_image_size.value())
         self.selection_changed()
 
+    def image_selected_key_event(self, e):
+        self.tableWidget.keyPressEvent(e)
+
     def compute_area(self, idx):
         norm_factor = (self.wing_result.at[idx, "image_size"][0] * self.wing_result.at[idx, "scale"],
                        self.wing_result.at[idx, "image_size"][1] * self.wing_result.at[idx, "scale"])
-        # print(norm_factor)
+        # print("scale={}, norm factor={}".format(self.wing_result.at[idx, "scale"], norm_factor))
         return self.shoelace_polygon_area(self.wing_result.at[idx, "keypoints"], norm_factor)
 
     @staticmethod
     def shoelace_polygon_area(points, norm_factor):
         x = np.array(points[0::2])*norm_factor[0]
         y = np.array(points[1::2])*norm_factor[1]
+        # print("area calc x={}, y={}".format(x,y))
         return 0.5 * np.abs(np.dot(x, np.roll(y, 1)) - np.dot(y, np.roll(x, 1)))
 
     def update_keypoints(self, kpts):
+        # print("update to {}".format(kpts))
         row = self.tableWidget.currentIndex().row()
-
         kpts[0::2] = [x/self.image_current_size[0] for x in kpts[0::2]]
         kpts[1::2] = [x/self.image_current_size[1] for x in kpts[1::2]]
-
         area = self.compute_area(row)
+        self.wing_result.at[row, "keypoints"] = kpts
         self.wing_result.at[row, "area"] = area
-        self.tableWidget.setItem(row, 1, QTableWidgetItem(str(area)))
+        self.update_table()
 
     def add_scale(self):
         text, ok = QInputDialog.getText(self, 'Set Scale', 'Set Scale (pixels/mm):')
@@ -239,12 +254,77 @@ class WingNet(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
                     self.wing_result.at[i, "area"] = self.compute_area(i)
             self.update_table()
 
+    def load_model_dialog(self):
+        filename = QFileDialog.getOpenFileName(parent=self, caption='Load Model', dir='.')
+
+        print("model loaded from {}".format(filename))
+        if filename:
+            self.model_path = filename
+
+    def save_project_dialog(self):
+        filename = QFileDialog.getSaveFileName(self, "Save file", "", ".wings")
+        path = filename[0] + filename[1]
+        self.save_project(path)
+
+    def save_project(self, path):
+        if path:
+            print("save wings to {}".format(path))
+            self.wing_result.to_pickle(path)
+
+    def load_project_dialog(self):
+        filename, ext = QFileDialog.getOpenFileName(parent=self, caption='Load Project', dir='.',
+                                               filter="Wing File (*.wings)")
+        self.load_project(filename)
+
+    def load_project(self, path):
+        print("loading from {}".format(path))
+        if path and os.path.exists(path):
+            project = pd.read_pickle(path)
+            for img_path in project["path"]:
+                if not os.path.exists(img_path):
+                    if path is not self.autosave_path:
+                        error_dialog = QErrorMessage(self)
+                        error_dialog.setWindowTitle('Error Loading {}'.format(path))
+                        error_dialog.showMessage(
+                            "Unable to load project file {}, since it contains the image {}, which no longer exists.".format(path, img_path)
+                        )
+                    print("Image {} does not exist!".format(img_path))
+                    return
+            self.wing_result = project
+            print(self.wing_result)
+            self.tableWidget.clear()
+            for i in range(len(self.wing_result)):
+                self.tableWidget.insertRow(i)
+            self.update_table()
+
     def save_csv(self):
         filename = QFileDialog.getSaveFileName(self, "Save file", "", ".csv")
+        if filename:
+            print("save cvs to {}".format(filename))
+            path = filename[0]+filename[1]
+            df_expanded = pd.DataFrame(self.wing_result['keypoints'].values.tolist(),
+                                       columns=['kp1_x', 'kp1_y', 'kp2_x', 'kp2_y', 'kp3_x', 'kp3_y', 'kp4_x', 'kp4_y',
+                                                'kp5_x', 'kp5_y', 'kp6_x', 'kp6_y', 'kp7_x', 'kp7_y', 'kp8_x', 'kp8_y'])
+            df_expanded = pd.concat(
+                [self.wing_result['path'], df_expanded['kp1_x'], df_expanded['kp1_y'],
+                 df_expanded['kp2_x'], df_expanded['kp2_y'], df_expanded['kp3_x'], df_expanded['kp3_y'],
+                 df_expanded['kp4_x'], df_expanded['kp4_y'], df_expanded['kp5_x'], df_expanded['kp5_y'],
+                 df_expanded['kp6_x'], df_expanded['kp6_y'], df_expanded['kp7_x'], df_expanded['kp7_y'],
+                 df_expanded['kp8_x'], df_expanded['kp8_y'], self.wing_result['scale'], self.wing_result['area']],
+                axis=1, keys=['path', 'kp1_x', 'kp1_y', 'kp2_x', 'kp2_y', 'kp3_x', 'kp3_y', 'kp4_x', 'kp4_y', 'kp5_x',
+                              'kp5_y', 'kp6_x', 'kp6_y', 'kp7_x', 'kp7_y', 'kp8_x', 'kp8_y', 'scale', 'area'])
+            df_expanded.sort("path")
+            df_expanded.to_csv(path, mode='w', index=False)
 
-        print(filename)
-        path = filename[0]+filename[1]
-        self.wing_result.to_csv(path, mode='w', columns=['path','keypoints','scale','area'], index=False)
+    def check_if_file_exists(self, file, extention, message):
+        path = file+extention
+        print("checking if {} exists".format(path))
+        if os.path.exists(path):
+            return path
+        filename = QFileDialog.getOpenFileName(parent=self, caption=message, dir='.', filter=extention)
+        if not filename:
+            return self.check_if_file_exists(file, extention, message)
+        return filename
 
 
 def main():

@@ -3,8 +3,8 @@
 # Form implementation generated from reading ui file 'main_window.ui',
 # licensing of 'main_window.ui' applies.
 #
-# Created: Fri Aug 23 17:24:46 2019
-#      by: pyside2-uic  running on PySide2 5.12.4
+# Created: Sun Aug 25 12:36:08 2019
+#      by: pyside2-uic  running on PySide2 5.9.0~a1
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -79,12 +79,14 @@ class Ui_MainWindow(object):
         self.actionSet_Scale.setObjectName("actionSet_Scale")
         self.actionTest = QtWidgets.QAction(MainWindow)
         self.actionTest.setObjectName("actionTest")
+        self.actionLoad_Model = QtWidgets.QAction(MainWindow)
+        self.actionLoad_Model.setObjectName("actionLoad_Model")
         self.menuFile.addAction(self.actionAdd_Wings)
         self.menuFile.addAction(self.actionOpen_Existing_Project)
         self.menuFile.addAction(self.actionSave_Project)
         self.menuFile.addAction(self.actionExport_CSV)
+        self.menuFile.addAction(self.actionLoad_Model)
         self.menuTools.addAction(self.actionSet_Scale)
-        self.menuTools.addAction(self.actionTest)
         self.menuBar.addAction(self.menuFile.menuAction())
         self.menuBar.addAction(self.menuTools.menuAction())
 
@@ -105,4 +107,5 @@ class Ui_MainWindow(object):
         self.actionExport_CSV.setText(QtWidgets.QApplication.translate("MainWindow", "Export CSV", None, -1))
         self.actionSet_Scale.setText(QtWidgets.QApplication.translate("MainWindow", "Set Scale", None, -1))
         self.actionTest.setText(QtWidgets.QApplication.translate("MainWindow", "Test", None, -1))
+        self.actionLoad_Model.setText(QtWidgets.QApplication.translate("MainWindow", "Load Model", None, -1))
 

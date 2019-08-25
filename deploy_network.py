@@ -8,6 +8,7 @@ import pandas as pd
 class WingKeypointsGenerator():
 
     def __init__(self, image_list, model_path="/home/timo/Data2/wingNet_models/wings_resnet34_weights"):
+        print("initializing keypoint generator...")
         self.RESIZE = (256, 256)
         self.KPT_DIV = np.array([self.RESIZE[0], self.RESIZE[1], self.RESIZE[0], self.RESIZE[1],
                                  self.RESIZE[0], self.RESIZE[1], self.RESIZE[0], self.RESIZE[1],
@@ -20,12 +21,16 @@ class WingKeypointsGenerator():
         self.image_list = image_list
         self.data_loader = module_data.WingsInferenceDataLoader(image_list, 32, resize_dims=(256, 256),
                                                                 shuffle=False, validation_split=0.0, num_workers=1)
+        print('... done')
+
+    def __del__(self):
+        torch.cuda.empty_cache()
 
     def load_model(self, path_to_model):
         print('Loading model...')
         w_net_model = module_arch.wingnet()
         w_net_model.load_state_dict(torch.load(path_to_model))
-
+        print('...done')
         return w_net_model
 
     def get_device(self, use_gpu):
@@ -52,11 +57,15 @@ class WingKeypointsGenerator():
         return 0.5 * np.abs(np.dot(x, np.roll(y, 1)) - np.dot(y, np.roll(x, 1)))
 
     def process_images(self):
+        print("processing...")
         results = []
+        cnt = 0
         for batch_idx, (data, names) in enumerate(self.data_loader):
             keypoints = self.pass_forward(data, self.model, self.device)
             for name, keypoint in zip(names, keypoints):
                 results.append([name, keypoint])
+            cnt += len(names)
+            print("processed {} images".format(cnt))
         return results
 
 # def area_triangle(triangle_points):
