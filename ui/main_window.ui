@@ -94,6 +94,7 @@
     <addaction name="actionOpen_Existing_Project"/>
     <addaction name="actionSave_Project"/>
     <addaction name="actionExport_CSV"/>
+    <addaction name="actionLoad_Model"/>
    </widget>
    <widget class="QMenu" name="menuTools">
     <property name="title">
@@ -132,6 +133,11 @@
   <action name="actionTest">
    <property name="text">
     <string>Test</string>
+   </property>
+  </action>
+  <action name="actionLoad_Model">
+   <property name="text">
+    <string>Load Model</string>
    </property>
   </action>
  </widget>

@@ -90,6 +90,7 @@ class WingDataInference(Dataset):
 
         self.list_paths = list_paths
         self.resize_dims = resize_dims
+        print("New dataset with {} images".format(len(list_paths)))
 
         self.data_transform = transforms.Compose([
             transforms.Resize(resize_dims),
@@ -108,6 +109,7 @@ class WingDataInference(Dataset):
         :return: an image as tensor and it's path
         """
         # Select sample
+        # print("Get sample num {}".format(index))
         sample_path = self.list_paths[index]
 
         if not os.path.isfile(sample_path):
@@ -120,7 +122,6 @@ class WingDataInference(Dataset):
         image_aug = self.seq(image=image)
 
         input_tensor = ((torch.tensor(image_aug)).permute(2, 0, 1))
-
         return input_tensor, sample_path
 
 
