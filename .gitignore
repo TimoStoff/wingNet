@@ -1,3 +1,6 @@
+#Custom file
+*.wings
+
 pretrained/*
 # Byte-compiled / optimized / DLL files
 __pycache__/
