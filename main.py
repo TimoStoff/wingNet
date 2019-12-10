@@ -225,10 +225,26 @@ class WingNet(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
         self.tableWidget.keyPressEvent(e)
 
     def compute_area(self, idx):
+        use_polygon_area = False
         norm_factor = (self.wing_result.at[idx, "image_size"][0] * self.wing_result.at[idx, "scale"],
                        self.wing_result.at[idx, "image_size"][1] * self.wing_result.at[idx, "scale"])
         # print("scale={}, norm factor={}".format(self.wing_result.at[idx, "scale"], norm_factor))
-        return self.shoelace_polygon_area(self.wing_result.at[idx, "keypoints"], norm_factor)
+        if use_polygon_area:
+            return self.shoelace_polygon_area(list(self.wing_result.at[idx, "keypoints"]), norm_factor)
+        else:
+            return square_distance_centroid(list(self.wing_result.at[idx, "keypoints"]), norm_factor)
+
+
+    def square_distance_centroid(points, norm_factor):
+        points[0::2] *= norm_factor[0]
+        points[1::2] *= norm_factor[1]
+        pts = [np.array([x, y]) for x, y in zip(points[0::2], points[1::2])]
+        centroid = np.array([sum(points[0::2])/len(pts), sum(points[1::2])/len(pts)])
+        
+        distances = np.array([math.sqrt(sum(x)) for x in ((pts[:]-centroid)**2)[:]])
+        distances = distances**2
+        metric = math.sqrt(sum(distances))
+        return metric
 
     @staticmethod
     def shoelace_polygon_area(points, norm_factor):
