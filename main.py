@@ -324,7 +324,7 @@ class WingNet(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
                  df_expanded['kp8_x'], df_expanded['kp8_y'], self.wing_result['scale'], self.wing_result['area']],
                 axis=1, keys=['path', 'kp1_x', 'kp1_y', 'kp2_x', 'kp2_y', 'kp3_x', 'kp3_y', 'kp4_x', 'kp4_y', 'kp5_x',
                               'kp5_y', 'kp6_x', 'kp6_y', 'kp7_x', 'kp7_y', 'kp8_x', 'kp8_y', 'scale', 'area'])
-            df_expanded.sort("path")
+            # df_expanded.sort("path")
             df_expanded.to_csv(path, mode='w', index=False)
 
     def check_if_file_exists(self, file, extention, message):
