@@ -126,7 +126,7 @@ class WingNet(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
         header.setSectionResizeMode(0, QtWidgets.QHeaderView.Stretch)
         header.setSectionResizeMode(1, QtWidgets.QHeaderView.ResizeToContents)
 
-        self.load_project(self.autosave_path)
+        # self.load_project(self.autosave_path)
 
     def browse_folders(self):
         self.tableWidget.clear()
@@ -150,28 +150,31 @@ class WingNet(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
         if file_dialog.exec():
             all_paths = file_dialog.selectedFiles()
 
-        print(all_paths)
-
+        print("Currently containing {}".format(all_paths))
         if all_paths:  # if user didn't pick a directory don't continue
             for f_path in all_paths:
                 if os.path.isfile(f_path):
                     self.image_paths.append(f_path)
                 elif os.path.isdir(f_path):
                     self.folder_list.append(f_path)
+
             self.image_paths = module_data.get_image_paths(self.folder_list)
-            print(len(self.image_paths))
-
-            for image_path in self.image_paths:
-                row_position = self.tableWidget.rowCount()
-                self.tableWidget.insertRow(row_position)
-                image = Image.open(image_path)
-                self.wing_result.loc[len(self.wing_result)] = [image_path, [], self.scale, 0,
-                                                               (image.size[0], image.size[1])]
-                self.tableWidget.setItem(row_position, 0, QTableWidgetItem(image_path))
-                self.tableWidget.setItem(row_position, 1, QTableWidgetItem("-"))
-                self.tableWidget.setItem(row_position, 2, QTableWidgetItem(str(1.0/self.scale)))
-
+            for image_path, table_idx in zip(self.image_paths, range(0, len(self.image_paths), 1)):
+                self.add_image_to_table(image_path, table_idx)
         self.btn_label_wings.setEnabled(True)
+
+    def add_image_to_table(self, image_path, table_index):
+        num_rows = self.tableWidget.rowCount()
+        if table_index >= num_rows:
+            self.tableWidget.insertRow(num_rows)
+            table_index = num_rows
+        image = Image.open(image_path)
+        self.wing_result.loc[len(self.wing_result)] = [image_path, [], self.scale, 0,
+                                                       (image.size[0], image.size[1])]
+        self.tableWidget.setItem(table_index, 0, QTableWidgetItem(image_path))
+        self.tableWidget.setItem(table_index, 1, QTableWidgetItem("-"))
+        self.tableWidget.setItem(table_index, 2, QTableWidgetItem(str(1.0 / self.scale)))
+        return table_index
 
     def selection_changed(self):
         # if self.tableWidget.currentColumn() is 0:
@@ -302,6 +305,8 @@ class WingNet(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
             for i in range(len(self.wing_result)):
                 self.tableWidget.insertRow(i)
             self.update_table()
+        if self.tableWidget.rowCount() > 0:
+            self.btn_label_wings.setEnabled(True)
 
     def save_csv(self):
         filename = QFileDialog.getSaveFileName(self, "Save file", "", ".csv")

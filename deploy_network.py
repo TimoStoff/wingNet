@@ -10,31 +10,35 @@ class WingKeypointsGenerator():
     def __init__(self, image_list, model_path="/home/timo/Data2/wingNet_models/wings_resnet34_weights"):
         print("initializing keypoint generator...")
         self.RESIZE = (256, 256)
+        self.BATCH_SIZE = 16
         self.KPT_DIV = np.array([self.RESIZE[0], self.RESIZE[1], self.RESIZE[0], self.RESIZE[1],
                                  self.RESIZE[0], self.RESIZE[1], self.RESIZE[0], self.RESIZE[1],
                                  self.RESIZE[0], self.RESIZE[1], self.RESIZE[0], self.RESIZE[1],
                                  self.RESIZE[0], self.RESIZE[1], self.RESIZE[0], self.RESIZE[1]])
-        self.device = self.get_device(True)
+        self.use_gpu = True
+        self.device = self.get_device(self.use_gpu)
         self.model = self.load_model(model_path)
-        self.model = self.model.to(self.device)
+        if self.use_gpu:
+            self.model = self.model.to(self.device)
         self.model.eval()
         self.image_list = image_list
-        self.data_loader = module_data.WingsInferenceDataLoader(image_list, 32, resize_dims=(256, 256),
-                                                                shuffle=False, validation_split=0.0, num_workers=1)
+        self.data_loader = module_data.WingsInferenceDataLoader(image_list, self.BATCH_SIZE, resize_dims=self.RESIZE,
+                                                                shuffle=False, validation_split=0.0, num_workers=2)
         print('... done')
 
     def __del__(self):
         torch.cuda.empty_cache()
 
     def load_model(self, path_to_model):
-        print('Loading model...')
+        device = 'cuda:0' if (torch.cuda.is_available() and self.use_gpu) else 'cpu'
+        print('Loading model to {}...'.format(device))
         w_net_model = module_arch.wingnet()
-        w_net_model.load_state_dict(torch.load(path_to_model))
+        w_net_model.load_state_dict(torch.load(path_to_model))#, map_location={'cuda:0': 'cpu'}
         print('...done')
         return w_net_model
 
     def get_device(self, use_gpu):
-        if use_gpu and torch.cuda.is_available():
+        if use_gpu and torch.cuda.is_available() and self.use_gpu:
             device = torch.device('cuda:0')
         else:
             device = torch.device('cpu')
@@ -57,15 +61,21 @@ class WingKeypointsGenerator():
         return 0.5 * np.abs(np.dot(x, np.roll(y, 1)) - np.dot(y, np.roll(x, 1)))
 
     def process_images(self):
-        print("processing...")
+        print("Processing...")
         results = []
         cnt = 0
         for batch_idx, (data, names) in enumerate(self.data_loader):
+            print("Loading {} to {}".format(cnt, cnt+len(names)))
             keypoints = self.pass_forward(data, self.model, self.device)
-            for name, keypoint in zip(names, keypoints):
-                results.append([name, keypoint])
+            if keypoints.ndim == 1:
+                results.append([names[0], keypoints])
+                # print("result={}".format(results[-1]))
+            else:
+                for name, keypoint in zip(names, keypoints):
+                    results.append([name, keypoint])
+                    # print("result={}".format(results[-1]))
             cnt += len(names)
-            print("processed {} images".format(cnt))
+            print("Processed {} images".format(cnt))
         return results
 
 # def area_triangle(triangle_points):
