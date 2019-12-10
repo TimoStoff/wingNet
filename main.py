@@ -151,11 +151,7 @@ class WingNet(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
                 self.tableWidget.setItem(row_position, 0, QTableWidgetItem(image_path))
                 self.tableWidget.setItem(row_position, 1, QTableWidgetItem("-"))
                 self.tableWidget.setItem(row_position, 2, QTableWidgetItem(str(1.0/self.scale)))
-        for index, item in self.wing_result.iterrows():
-            item["area"] = index
-            # print(item["path"])
-        # self.wing_result.at[3, "path"] = "hello"
-        print(self.wing_result)
+
         self.btn_label_wings.setEnabled(True)
 
     def selection_changed(self):
@@ -245,6 +241,11 @@ class WingNet(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
         print(filename)
         path = filename[0]+filename[1]
         self.wing_result.to_csv(path, mode='w', columns=['path','keypoints','scale','area'], index=False)
+        # df = pd.DataFrame(self.wing_result["path"], self.wing_result["keypoints"].values.tolist(), columns=["name", "kp1_x", "kp1_y", "kp2_x",
+        #                                                                           "kp2_y", "kp3_x", "kp3_y", "kp4_x",
+        #                                                                           "kp4_y", "kp5_x", "kp5_y", "kp6_x",
+        #                                                                           "kp6_y", "kp7_x", "kp7_y", "kp8_x",
+        #                                                                           "kp8_y", "scale_mm/pixel", "area"])
 
 
 def main():
