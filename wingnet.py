@@ -6,7 +6,7 @@ from PySide2 import QtCore, QtWidgets, QtGui
 import ui.main_window as main_window
 import deploy_network as wing_net
 import sys, os
-import time
+import math
 
 import data_loader.data_loaders as module_data
 
@@ -224,11 +224,28 @@ class WingNet(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
     def image_selected_key_event(self, e):
         self.tableWidget.keyPressEvent(e)
 
+    def square_distance_centroid(self, points, norm_factor):
+        points[0::2] = np.array(points[0::2]) * norm_factor[0]
+        points[1::2] = np.array(points[1::2]) * norm_factor[1]
+        pts = [np.array([x, y]) for x, y in zip(points[0::2], points[1::2])]
+        centroid = np.array([sum(points[0::2])/len(pts), sum(points[1::2])/len(pts)])
+        
+        distances = np.array([math.sqrt(sum(x)) for x in ((pts[:]-centroid)**2)[:]])
+        distances = distances**2
+        metric = math.sqrt(sum(distances))
+        return metric
+
+    
     def compute_area(self, idx):
+        use_polygon_area = False
         norm_factor = (self.wing_result.at[idx, "image_size"][0] * self.wing_result.at[idx, "scale"],
                        self.wing_result.at[idx, "image_size"][1] * self.wing_result.at[idx, "scale"])
         # print("scale={}, norm factor={}".format(self.wing_result.at[idx, "scale"], norm_factor))
-        return self.shoelace_polygon_area(self.wing_result.at[idx, "keypoints"], norm_factor)
+        if use_polygon_area:
+            return self.shoelace_polygon_area(list(self.wing_result.at[idx, "keypoints"]), norm_factor)
+        else:
+            return self.square_distance_centroid(list(self.wing_result.at[idx, "keypoints"]), norm_factor)
+
 
     @staticmethod
     def shoelace_polygon_area(points, norm_factor):

@@ -1,4 +1,5 @@
 #Custom file
+.tmp_project.wings
 *.wings
 
 pretrained/*
