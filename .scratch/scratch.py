@@ -35,19 +35,20 @@ class MyGraph(FigureCanvas):
 
         img = cv.imread("/home/timo/Data2/wingNet/wings/No_TPS/avi_wings/0_wings/fly1.jpg")
         img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
+        self.axes.imshow(img)
 
         self.show()
-        self.plotDraggablePoints([0.1, 0.1], [0.2, 0.2], size=[0.02, 0.02], img=img)
+        self.plotDraggablePoints([0.1, 0.1], [0.2, 0.2], size=[0.02, 0.02], img_shape=img.shape)
 #        self.plotDraggablePoints([1, 1], [2, 2], [1, 1])
 
 
-    def plotDraggablePoints(self, xy1, xy2, size=None, img=None):
+    def plotDraggablePoints(self, xy1, xy2, size=None, img_shape=(200, 200)):
 
         """Plot and define the 2 draggable points of the baseline"""
 
         # del(self.list_points[:])
-        self.list_points.append(DraggablePoint(self, x=xy1[0], y=xy1[1], size=size[0], img=img))
-        self.list_points.append(DraggablePoint(self, x=xy2[0], y=xy2[1], size=size[1], img=img))
+        self.list_points.append(DraggablePoint(self, x=xy1[0], y=xy1[1], size=size[0], img_shape=img_shape))
+        self.list_points.append(DraggablePoint(self, x=xy2[0], y=xy2[1], size=size[1], img_shape=img_shape))
         self.updateFigure()
 
 

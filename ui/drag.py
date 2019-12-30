@@ -10,13 +10,13 @@ class DraggablePoint:
 
     lock = None #  only one can be animated at a time
 
-    def __init__(self, parent, x=0.1, y=0.1, size=0.1, draw_line=False, img_shape=(200, 200)):
+    def __init__(self, parent, x=0.1, y=0.1, size=0.1, draw_line=False, img=None):
 
         self.parent = parent
-        self.img_shape = img_shape
-        self.x = x*max(img_shape[0], img_shape[1])
-        self.y = y*max(img_shape[0], img_shape[1])
-        self.size = size*max(img_shape[0], img_shape[1])
+        self.parent.axes.imshow(img)
+        self.x = x*max(img.shape[0], img.shape[1])
+        self.y = y*max(img.shape[0], img.shape[1])
+        self.size = size*max(img.shape[0], img.shape[1])
         self.point = patches.Ellipse((self.x, self.y), self.size, self.size, fc='None', edgecolor='r')
         print("{}, {},{}, sz={}".format(self.point, self.x, self.y, self.size))
         parent.fig.axes[0].add_patch(self.point)
@@ -24,6 +24,7 @@ class DraggablePoint:
         self.background = None
         self.connect()
         self.draw_line = draw_line
+        self.img = img
 
         if self.parent.list_points and self.draw_line:
             line_x = [self.parent.list_points[0].x, self.x]
