@@ -3,8 +3,8 @@
 # Form implementation generated from reading ui file 'gallery_window.ui',
 # licensing of 'gallery_window.ui' applies.
 #
-# Created: Thu Aug 22 16:49:03 2019
-#      by: pyside2-uic  running on PySide2 5.12.4
+# Created: Tue Dec 31 14:39:55 2019
+#      by: pyside2-uic  running on PySide2 5.13.1
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -46,4 +46,14 @@ class Ui_GalleryWindow(object):
 
     def retranslateUi(self, GalleryWindow):
         GalleryWindow.setWindowTitle(QtWidgets.QApplication.translate("GalleryWindow", "MainWindow", None, -1))
+
+
+if __name__ == "__main__":
+    import sys
+    app = QtWidgets.QApplication(sys.argv)
+    GalleryWindow = QtWidgets.QMainWindow()
+    ui = Ui_GalleryWindow()
+    ui.setupUi(GalleryWindow)
+    GalleryWindow.show()
+    sys.exit(app.exec_())
 

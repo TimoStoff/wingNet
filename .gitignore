@@ -1,6 +1,7 @@
 #Custom file
 .tmp_project.wings
 *.wings
+*.swp
 
 pretrained/*
 # Byte-compiled / optimized / DLL files

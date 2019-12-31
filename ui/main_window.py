@@ -3,8 +3,8 @@
 # Form implementation generated from reading ui file 'main_window.ui',
 # licensing of 'main_window.ui' applies.
 #
-# Created: Sun Aug 25 12:36:08 2019
-#      by: pyside2-uic  running on PySide2 5.9.0~a1
+# Created: Tue Dec 31 14:39:55 2019
+#      by: pyside2-uic  running on PySide2 5.13.1
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -26,9 +26,9 @@ class Ui_MainWindow(object):
         self.verticalLayout = QtWidgets.QVBoxLayout(self.layoutWidget)
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)
         self.verticalLayout.setObjectName("verticalLayout")
-        self.gv_wing_image = QtWidgets.QGraphicsView(self.layoutWidget)
-        self.gv_wing_image.setObjectName("gv_wing_image")
-        self.verticalLayout.addWidget(self.gv_wing_image)
+        self.wingview_layout = QtWidgets.QVBoxLayout()
+        self.wingview_layout.setObjectName("wingview_layout")
+        self.verticalLayout.addLayout(self.wingview_layout)
         self.slider_image_size = QtWidgets.QSlider(self.layoutWidget)
         self.slider_image_size.setMaximum(1024)
         self.slider_image_size.setOrientation(QtCore.Qt.Horizontal)
@@ -108,4 +108,14 @@ class Ui_MainWindow(object):
         self.actionSet_Scale.setText(QtWidgets.QApplication.translate("MainWindow", "Set Scale", None, -1))
         self.actionTest.setText(QtWidgets.QApplication.translate("MainWindow", "Test", None, -1))
         self.actionLoad_Model.setText(QtWidgets.QApplication.translate("MainWindow", "Load Model", None, -1))
+
+
+if __name__ == "__main__":
+    import sys
+    app = QtWidgets.QApplication(sys.argv)
+    MainWindow = QtWidgets.QMainWindow()
+    ui = Ui_MainWindow()
+    ui.setupUi(MainWindow)
+    MainWindow.show()
+    sys.exit(app.exec_())
 

@@ -10,7 +10,7 @@ class WingKeypointsGenerator():
     def __init__(self, image_list, model_path="/home/timo/Data2/wingNet_models/wings_resnet34_weights"):
         print("initializing keypoint generator...")
         self.RESIZE = (256, 256)
-        self.BATCH_SIZE = 16
+        self.BATCH_SIZE = 2
         self.KPT_DIV = np.array([self.RESIZE[0], self.RESIZE[1], self.RESIZE[0], self.RESIZE[1],
                                  self.RESIZE[0], self.RESIZE[1], self.RESIZE[0], self.RESIZE[1],
                                  self.RESIZE[0], self.RESIZE[1], self.RESIZE[0], self.RESIZE[1],
@@ -50,16 +50,6 @@ class WingKeypointsGenerator():
         output_valid = np.squeeze(output_valid)
         return output_valid
 
-    def area_triangle(self, triangle_points):
-        ax, ay, bx, by, cx, cy = triangle_points
-        area = np.abs((ax * (by - cy) + bx * (cy - ay) + cx * (ay - by)) / 2)
-        return area
-
-    def shoelace_polygon_area(self, points, norm_factor):
-        x = np.array(points[0::2])*norm_factor[0::2]
-        y = np.array(points[1::2])*norm_factor[1::2]
-        return 0.5 * np.abs(np.dot(x, np.roll(y, 1)) - np.dot(y, np.roll(x, 1)))
-
     def process_images(self):
         print("Processing...")
         results = []
@@ -76,6 +66,7 @@ class WingKeypointsGenerator():
                     # print("result={}".format(results[-1]))
             cnt += len(names)
             print("Processed {} images".format(cnt))
+        print(results)
         return results
 
 # def area_triangle(triangle_points):

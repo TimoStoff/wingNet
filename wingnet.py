@@ -4,11 +4,13 @@ from PySide2.QtWidgets import *
 from PySide2 import QtCore, QtWidgets, QtGui
 
 import ui.main_window as main_window
+import ui.drag as drag_pt
 import deploy_network as wing_net
 import sys, os
 import math
 
 import data_loader.data_loaders as module_data
+import ui.wing_view as wing_view
 
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
@@ -102,13 +104,12 @@ class WingNet(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
         self.image_current_size = img_default_size
         self.slider_image_size.setValue(img_default_size[0])
         self.scale = 1.0
-        self.model_path = "/home/timo/Data2/wingNet_models/wings_resnet34_weights"
+        self.model_path = "/home/timo/Data2/wingNet/wingNet_models/wings_resnet34_weights"
         self.model_path = self.check_if_file_exists(self.model_path, "", message="Please Load Model")
         print("Loading model from {}".format(self.model_path))
 
-        self.scene = WingSceneWidget(self)
-        self.gv_wing_image.setScene(self.scene)
-        self.gv_wing_image.setRenderHints(QPainter.Antialiasing | QPainter.SmoothPixmapTransform)
+        self.scene = wing_view.WingView(image_path="/home/timo/Data2/wingNet/wings/No_TPS/avi_wings/0_wings/fly1.jpg")
+        self.wingview_layout.addWidget(self.scene)
 
         self.menuBar.setNativeMenuBar(False)
         self.actionSet_Scale.triggered.connect(self.add_scale)

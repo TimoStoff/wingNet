@@ -10,40 +10,28 @@ class DraggablePoint:
 
     lock = None #  only one can be animated at a time
 
-    def __init__(self, parent, x=0.1, y=0.1, size=0.1, draw_line=False, img=None):
+    def __init__(self, parent, x=0.1, y=0.1, size=0.1, draw_line=False, img_shape=(200, 200)):
 
         self.parent = parent
-        self.parent.axes.imshow(img)
-        self.x = x*max(img.shape[0], img.shape[1])
-        self.y = y*max(img.shape[0], img.shape[1])
-        self.size = size*max(img.shape[0], img.shape[1])
+        self.img_shape = img_shape
+        self.x = x*max(img_shape[0], img_shape[1])
+        self.y = y*max(img_shape[0], img_shape[1])
+        self.size = size*max(img_shape[0], img_shape[1])
         self.point = patches.Ellipse((self.x, self.y), self.size, self.size, fc='None', edgecolor='r')
         print("{}, {},{}, sz={}".format(self.point, self.x, self.y, self.size))
         parent.fig.axes[0].add_patch(self.point)
         self.press = None
         self.background = None
         self.connect()
-        self.draw_line = draw_line
-        self.img = img
-
-        if self.parent.list_points and self.draw_line:
-            line_x = [self.parent.list_points[0].x, self.x]
-            line_y = [self.parent.list_points[0].y, self.y]
-
-            self.line = Line2D(line_x, line_y, color='r', alpha=0.5)
-            parent.fig.axes[0].add_line(self.line)
 
     def connect(self):
-
         'connect to all the events we need'
-
         self.cidpress = self.point.figure.canvas.mpl_connect('button_press_event', self.on_press)
         self.cidrelease = self.point.figure.canvas.mpl_connect('button_release_event', self.on_release)
         self.cidmotion = self.point.figure.canvas.mpl_connect('motion_notify_event', self.on_motion)
 
 
     def on_press(self, event):
-
         if event.inaxes != self.point.axes: return
         if DraggablePoint.lock is not None: return
         contains, attrd = self.point.contains(event)
@@ -55,11 +43,6 @@ class DraggablePoint:
         canvas = self.point.figure.canvas
         axes = self.point.axes
         self.point.set_animated(True)
-        if self.draw_line:
-            if self == self.parent.list_points[1]:
-                self.line.set_animated(True)
-            else:
-                self.parent.list_points[1].line.set_animated(True)
         canvas.draw()
         self.background = canvas.copy_from_bbox(self.point.axes.bbox)
 
@@ -71,7 +54,6 @@ class DraggablePoint:
 
 
     def on_motion(self, event):
-
         if DraggablePoint.lock is not self:
             return
         if event.inaxes != self.point.axes: return
@@ -88,26 +70,8 @@ class DraggablePoint:
         # redraw just the current rectangle
         axes.draw_artist(self.point)
 
-        if self.draw_line:
-            if self == self.parent.list_points[1]:
-                axes.draw_artist(self.line)
-            else:
-                self.parent.list_points[1].line.set_animated(True)
-                axes.draw_artist(self.parent.list_points[1].line)
-
         self.x = self.point.center[0]
         self.y = self.point.center[1]
-
-        if self.draw_line:
-            if self == self.parent.list_points[1]:
-                line_x = [self.parent.list_points[0].x, self.x]
-                line_y = [self.parent.list_points[0].y, self.y]
-                self.line.set_data(line_x, line_y)
-            else:
-                line_x = [self.x, self.parent.list_points[1].x]
-                line_y = [self.y, self.parent.list_points[1].y]
-
-            self.parent.list_points[1].line.set_data(line_x, line_y)
 
         # blit just the redrawn area
         canvas.blit(axes.bbox)
@@ -124,12 +88,6 @@ class DraggablePoint:
 
         # turn off the rect animation property and reset the background
         self.point.set_animated(False)
-        if self.draw_line: 
-            if self == self.parent.list_points[1]:
-                self.line.set_animated(False)
-            else:
-                self.parent.list_points[1].line.set_animated(False)
-
         self.background = None
 
         # redraw the full figure

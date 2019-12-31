@@ -23,7 +23,7 @@
       <widget class="QWidget" name="layoutWidget">
        <layout class="QVBoxLayout" name="verticalLayout">
         <item>
-         <widget class="QGraphicsView" name="gv_wing_image"/>
+         <layout class="QVBoxLayout" name="wingview_layout"/>
         </item>
         <item>
          <widget class="QSlider" name="slider_image_size">
