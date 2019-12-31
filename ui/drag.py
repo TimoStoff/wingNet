@@ -10,18 +10,19 @@ class DraggablePoint:
 
     lock = None #  only one can be animated at a time
 
-    def __init__(self, parent, x=0.1, y=0.1, size=0.1, draw_line=False, img_shape=(200, 200)):
+    def __init__(self, parent, x=0.1, y=0.1, size=0.1, draw_line=False, img_shape=(200, 200), callback=None):
 
         self.parent = parent
         self.img_shape = img_shape
-        self.x = x*max(img_shape[0], img_shape[1])
-        self.y = y*max(img_shape[0], img_shape[1])
+        self.coords = [x, y]
+        self.x = x
+        self.y = y
         self.size = size*max(img_shape[0], img_shape[1])
         self.point = patches.Ellipse((self.x, self.y), self.size, self.size, fc='None', edgecolor='r')
-        print("{}, {},{}, sz={}".format(self.point, self.x, self.y, self.size))
         parent.fig.axes[0].add_patch(self.point)
         self.press = None
         self.background = None
+        self.callback = callback
         self.connect()
 
     def connect(self):
@@ -78,7 +79,6 @@ class DraggablePoint:
 
 
     def on_release(self, event):
-
         'on release we reset the press data'
         if DraggablePoint.lock is not self:
             return
@@ -95,7 +95,9 @@ class DraggablePoint:
 
         self.x = self.point.center[0]
         self.y = self.point.center[1]
-        print("new point location at {},{}".format(self.x, self.y))
+        self.coords = [self.x, self.y]
+        self.callback()
+        print("new point location at {},{} = {}".format(self.x, self.y, self.coords))
 
     def disconnect(self):
 
@@ -104,3 +106,7 @@ class DraggablePoint:
         self.point.figure.canvas.mpl_disconnect(self.cidpress)
         self.point.figure.canvas.mpl_disconnect(self.cidrelease)
         self.point.figure.canvas.mpl_disconnect(self.cidmotion)
+
+    def get_coords(self):
+        return self.coords
+

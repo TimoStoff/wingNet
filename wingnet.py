@@ -108,7 +108,8 @@ class WingNet(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
         self.model_path = self.check_if_file_exists(self.model_path, "", message="Please Load Model")
         print("Loading model from {}".format(self.model_path))
 
-        self.scene = wing_view.WingView(image_path="/home/timo/Data2/wingNet/wings/No_TPS/avi_wings/0_wings/fly1.jpg")
+        pts = [100, 100]
+        self.scene = wing_view.WingView(image_path="/home/timo/Data2/wingNet/wings/No_TPS/avi_wings/0_wings/fly1.jpg", keypoints=pts, callback=self.update_kpts_callback)
         self.wingview_layout.addWidget(self.scene)
 
         self.menuBar.setNativeMenuBar(False)
@@ -128,6 +129,12 @@ class WingNet(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
         header.setSectionResizeMode(1, QtWidgets.QHeaderView.ResizeToContents)
 
         # self.load_project(self.autosave_path)
+
+    def update_kpts_callback(self, kpts):
+        if len(kpts) == 16:
+            self.update_keypoints(kpts)
+        print("calling back! {}".format(kpts))
+
 
     def browse_folders(self):
         self.tableWidget.clear()
@@ -181,22 +188,21 @@ class WingNet(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
         # if self.tableWidget.currentColumn() is 0:
         row = self.tableWidget.currentIndex().row()
         selected = self.tableWidget.item(row, 0).text()
-        image = cv.imread(selected)
-        image = cv.resize(image, self.image_current_size)
-        height, width, channel = image.shape
-        bytes_per_line = 3 * width
-        q_img = QtGui.QImage(image.data, width, height, bytes_per_line, QtGui.QImage.Format_RGB888).rgbSwapped()
-        pixmap = QtGui.QPixmap.fromImage(q_img)
+       # image = cv.imread(selected)
+       # image = cv.resize(image, self.image_current_size)
+       # height, width, channel = image.shape
+       # bytes_per_line = 3 * width
+       # q_img = QtGui.QImage(image.data, width, height, bytes_per_line, QtGui.QImage.Format_RGB888).rgbSwapped()
+       # pixmap = QtGui.QPixmap.fromImage(q_img)
 
-        self.scene.clear()
-        p_item = self.scene.addPixmap(pixmap)
-        self.scene.give_pitem(p_item)
+       # self.scene.clear()
+       # p_item = self.scene.addPixmap(pixmap)
+       # self.scene.give_pitem(p_item)
 
         kpts = self.wing_result.at[row, "keypoints"]
-        # print("kpts={}, len={}".format(kpts, len(kpts)))
-        if len(kpts) == 16:
-            # print("draw kpts")
-            self.scene.draw_keypoints(kpts, self.image_current_size)
+        if len(kpts) <= 16:
+            #self.scene.draw_keypoints(kpts, self.image_current_size)
+           self.scene.updateImage(image_path=selected, keypoints=kpts)
 
     def update_table(self):
         for index, result in self.wing_result.iterrows():
