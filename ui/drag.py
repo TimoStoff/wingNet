@@ -97,7 +97,6 @@ class DraggablePoint:
         self.y = self.point.center[1]
         self.coords = [self.x, self.y]
         self.callback()
-        print("new point location at {},{} = {}".format(self.x, self.y, self.coords))
 
     def disconnect(self):
 

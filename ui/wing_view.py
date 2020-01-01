@@ -1,13 +1,15 @@
 import sys
 import matplotlib
 matplotlib.use("Qt5Agg")
-from PySide2 import QtWidgets, QtGui
-
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
+
+from PySide2 import QtWidgets, QtGui
+
+import numpy as np
 import cv2 as cv
 
-# Personnal modules
+# Personal modules
 from ui.drag import DraggablePoint
 
 
@@ -41,17 +43,14 @@ class WingView(FigureCanvas):
             self.axes.imshow(self.img)
             self.show()
         else:
-            print("clicked {} {}".format(event.xdata, event.ydata))
             if len(self.list_points) < 8:
                 self.list_points.append(DraggablePoint(self, x=event.xdata, y=event.ydata,
                     size=self.marker_size, img_shape=self.img_shape, callback=self.update_kpts))
                 if len(self.list_points) == 8:
-                    print("8 pts")
                     self.update_kpts()
         self.updateFigure()
 
     def update_kpts(self):
-        print("Update kpts")
         kpts = []
         for pt in self.list_points:
             coords = pt.get_coords()
@@ -61,7 +60,6 @@ class WingView(FigureCanvas):
 
     def updateImage(self, image_path=None, keypoints=[], parent=None, marker_size=0.02, dpi=100):
         self.clearFigure()
-        print("keypoints={}".format(keypoints))
         self.list_points.clear()
         self.marker_size = marker_size
         if image_path is None:
@@ -72,7 +70,6 @@ class WingView(FigureCanvas):
         self.axes.imshow(img)
         self.img_shape = img.shape
         self.img = img
-        print(self.img_shape)
 
         self.show()
         self.plotDraggablePoints(keypoints=keypoints, size=marker_size, img_shape=img.shape)
@@ -80,7 +77,6 @@ class WingView(FigureCanvas):
 
     def plotDraggablePoints(self, keypoints, size=0.02, img_shape=(200, 200)):
         for keypoint in zip(keypoints[0::2], keypoints[1::2]):
-            print("{}, {}, {}".format(keypoint, size, img_shape))
             self.list_points.append(DraggablePoint(self, x=keypoint[0], y=keypoint[1], size=size, img_shape=img_shape, callback=self.update_kpts))
         self.updateFigure()
 

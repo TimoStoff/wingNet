@@ -24,74 +24,6 @@ img_default_size = (512, 512)
 NORM_FACTOR = [10, 10, 10, 10, 10, 10, 10, 10,
                10, 10, 10, 10, 10, 10, 10, 10]
 
-class WingSceneWidget(QtWidgets.QGraphicsScene):
-    def __init__(self, parent):
-        super(self.__class__, self).__init__(parent)
-        self.keypoints = []
-        self.annotating = False
-        self.p_item = None
-        self.circ_radius = 5
-
-    def mouseDoubleClickEvent(self, event):
-        self.annotating = True
-        self.keypoints = []
-        self.remove_all_circles()
-
-    def mousePressEvent(self, event):
-        items = self.items(event.scenePos())
-        if items and isinstance(items[0], QGraphicsEllipseItem):
-            QtWidgets.QGraphicsScene.mousePressEvent(self, event)
-            return
-        if self.annotating:
-            x = event.scenePos().x()
-            y = event.scenePos().y()
-            self.keypoints.append([x, y])
-            circ = QGraphicsEllipseItem(0, 0, self.circ_radius * 2, self.circ_radius * 2, self.p_item)
-            circ.setPen(QPen(Qt.red, 2))
-            circ.setFlags(circ.flags() | QGraphicsItem.ItemIsMovable | QGraphicsItem.ItemIsSelectable)
-            circ.setPos(x - self.circ_radius, y - self.circ_radius)
-            if len(self.keypoints) >= 8:
-                self.annotating = False
-                self.update_keypoints()
-
-    def update_keypoints(self):
-        kpts = []
-        for item in self.items():
-            if isinstance(item, QGraphicsEllipseItem):
-                c_pt = item.pos()
-                kpts.extend((c_pt.x()+self.circ_radius, c_pt.y()+self.circ_radius))
-        if len(kpts) == 16:
-            self.parent().update_keypoints(kpts)
-
-    def mouseReleaseEvent(self, event):
-        items = self.items(event.scenePos())
-        if items and isinstance(items[0], QGraphicsEllipseItem):
-            QtWidgets.QGraphicsScene.mouseReleaseEvent(self, event)
-            self.update_keypoints()
-            return
-
-    def keyPressEvent(self, e):
-        self.parent().image_selected_key_event(e)
-
-    def give_pitem(self, p_item):
-        self.p_item = p_item
-
-    def draw_keypoints(self, keypoints, image_size):
-        self.remove_all_circles()
-        for x, y in zip(keypoints[0::2], keypoints[1::2]):
-            x *= image_size[0]
-            y *= image_size[1]
-            circ = QGraphicsEllipseItem(0, 0, self.circ_radius * 2, self.circ_radius * 2, self.p_item)
-            circ.setPen(QPen(Qt.red, 2))
-            circ.setFlag(QGraphicsItem.ItemIsMovable, True)
-            circ.setFlag(QGraphicsItem.ItemIsSelectable, True)
-            circ.setPos(x - self.circ_radius, y - self.circ_radius)
-
-    def remove_all_circles(self):
-        for item in self.items():
-            if isinstance(item, QGraphicsEllipseItem):
-                self.removeItem(item)
-
 class WingNet(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
     def __init__(self):
         super(self.__class__, self).__init__()
@@ -108,8 +40,7 @@ class WingNet(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
         self.model_path = self.check_if_file_exists(self.model_path, "", message="Please Load Model")
         print("Loading model from {}".format(self.model_path))
 
-        pts = [100, 100]
-        self.scene = wing_view.WingView(image_path="/home/timo/Data2/wingNet/wings/No_TPS/avi_wings/0_wings/fly1.jpg", keypoints=pts, callback=self.update_kpts_callback)
+        self.scene = wing_view.WingView(callback=self.update_kpts_callback)
         self.wingview_layout.addWidget(self.scene)
 
         self.menuBar.setNativeMenuBar(False)
@@ -133,7 +64,6 @@ class WingNet(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
     def update_kpts_callback(self, kpts):
         if len(kpts) == 16:
             self.update_keypoints(kpts)
-        print("calling back! {}".format(kpts))
 
 
     def browse_folders(self):
@@ -185,28 +115,16 @@ class WingNet(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
         return table_index
 
     def selection_changed(self):
-        # if self.tableWidget.currentColumn() is 0:
         row = self.tableWidget.currentIndex().row()
         selected = self.tableWidget.item(row, 0).text()
-       # image = cv.imread(selected)
-       # image = cv.resize(image, self.image_current_size)
-       # height, width, channel = image.shape
-       # bytes_per_line = 3 * width
-       # q_img = QtGui.QImage(image.data, width, height, bytes_per_line, QtGui.QImage.Format_RGB888).rgbSwapped()
-       # pixmap = QtGui.QPixmap.fromImage(q_img)
-
-       # self.scene.clear()
-       # p_item = self.scene.addPixmap(pixmap)
-       # self.scene.give_pitem(p_item)
 
         kpts = self.wing_result.at[row, "keypoints"]
-        if len(kpts) <= 16:
-            #self.scene.draw_keypoints(kpts, self.image_current_size)
-           self.scene.updateImage(image_path=selected, keypoints=kpts)
+        if len(kpts) > 16:
+            kpts = []
+        self.scene.updateImage(image_path=selected, keypoints=kpts)
 
     def update_table(self):
         for index, result in self.wing_result.iterrows():
-            # print("{}: {} = {}".format(result["path"], result["scale"], result["area"]))
             self.tableWidget.setItem(index, 0, QTableWidgetItem(str(result["path"])))
             self.tableWidget.setItem(index, 1, QTableWidgetItem(str(result["area"])))
             self.tableWidget.setItem(index, 2, QTableWidgetItem(str(1.0/result["scale"])))
@@ -217,9 +135,8 @@ class WingNet(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
         keypoint_generator = wing_net.WingKeypointsGenerator(self.image_paths, model_path=self.model_path)
         output = keypoint_generator.process_images()
         for i in range(len(output)):
-            # print(self.wing_result.at[i, "keypoints"])
-            # print(output[i][1])
-            self.wing_result.at[i, "keypoints"] = output[i][1]
+            image_size = self.wing_result.at[i, 'image_size']
+            self.wing_result.at[i, "keypoints"] = self.normed_to_pixel_coords(output[i][1], image_size)
             area = self.compute_area(i)
             self.wing_result.at[i, "area"] = area
         self.update_table()
@@ -232,26 +149,29 @@ class WingNet(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
         self.tableWidget.keyPressEvent(e)
 
     def square_distance_centroid(self, points, norm_factor):
+        print(points)
         points[0::2] = np.array(points[0::2]) * norm_factor[0]
         points[1::2] = np.array(points[1::2]) * norm_factor[1]
         pts = [np.array([x, y]) for x, y in zip(points[0::2], points[1::2])]
         centroid = np.array([sum(points[0::2])/len(pts), sum(points[1::2])/len(pts)])
-        
+
         distances = np.array([math.sqrt(sum(x)) for x in ((pts[:]-centroid)**2)[:]])
         distances = distances**2
         metric = math.sqrt(sum(distances))
         return metric
 
-    
+
     def compute_area(self, idx):
         use_polygon_area = False
-        norm_factor = (self.wing_result.at[idx, "image_size"][0] * self.wing_result.at[idx, "scale"],
-                       self.wing_result.at[idx, "image_size"][1] * self.wing_result.at[idx, "scale"])
-        # print("scale={}, norm factor={}".format(self.wing_result.at[idx, "scale"], norm_factor))
+        norm_factor = (self.wing_result.at[idx, "scale"],
+                       self.wing_result.at[idx, "scale"])
+        kpts = list(self.wing_result.at[idx, "keypoints"])
+        if len(kpts) != 16:
+            return
         if use_polygon_area:
-            return self.shoelace_polygon_area(list(self.wing_result.at[idx, "keypoints"]), norm_factor)
+            return self.shoelace_polygon_area(kpts, norm_factor)
         else:
-            return self.square_distance_centroid(list(self.wing_result.at[idx, "keypoints"]), norm_factor)
+            return self.square_distance_centroid(kpts, norm_factor)
 
 
     @staticmethod
@@ -261,13 +181,11 @@ class WingNet(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
         # print("area calc x={}, y={}".format(x,y))
         return 0.5 * np.abs(np.dot(x, np.roll(y, 1)) - np.dot(y, np.roll(x, 1)))
 
+
     def update_keypoints(self, kpts):
-        # print("update to {}".format(kpts))
         row = self.tableWidget.currentIndex().row()
-        kpts[0::2] = [x/self.image_current_size[0] for x in kpts[0::2]]
-        kpts[1::2] = [x/self.image_current_size[1] for x in kpts[1::2]]
-        area = self.compute_area(row)
         self.wing_result.at[row, "keypoints"] = kpts
+        area = self.compute_area(row)
         self.wing_result.at[row, "area"] = area
         self.update_table()
 
@@ -275,12 +193,12 @@ class WingNet(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
         text, ok = QInputDialog.getText(self, 'Set Scale', 'Set Scale (pixels/mm):')
         if ok:
             self.scale = 1.0/float(text)
-            print(self.scale)
             rows = self.tableWidget.selectedIndexes()
             if rows:
                 for row in rows:
                     self.wing_result.at[row.row(), "scale"] = self.scale
-                    self.wing_result.at[row.row(), "area"] = self.compute_area(row.row())
+                    if len(self.wing_result.at[row.row(), "keypoints"])==16:
+                        self.wing_result.at[row.row(), "area"] = self.compute_area(row.row())
             else:
                 for i in range(0, len(self.wing_result), 1):
                     self.wing_result.at[i, "scale"] = self.scale
@@ -338,16 +256,19 @@ class WingNet(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
             print("save cvs to {}".format(filename))
             path = filename[0]+filename[1]
             df_expanded = pd.DataFrame(self.wing_result['keypoints'].values.tolist(),
-                                       columns=['kp1_x', 'kp1_y', 'kp2_x', 'kp2_y', 'kp3_x', 'kp3_y', 'kp4_x', 'kp4_y',
-                                                'kp5_x', 'kp5_y', 'kp6_x', 'kp6_y', 'kp7_x', 'kp7_y', 'kp8_x', 'kp8_y'])
+                columns=['kp1_x', 'kp1_y', 'kp2_x', 'kp2_y', 'kp3_x', 'kp3_y', 'kp4_x', 'kp4_y',
+                         'kp5_x', 'kp5_y', 'kp6_x', 'kp6_y', 'kp7_x', 'kp7_y', 'kp8_x', 'kp8_y'])
+            dims = pd.DataFrame({'w':[x[0] for x in self.wing_result['image_size'][:]], 
+                'h':[x[1] for x in self.wing_result['image_size'][:]]})
             df_expanded = pd.concat(
-                [self.wing_result['path'], df_expanded['kp1_x'], df_expanded['kp1_y'],
-                 df_expanded['kp2_x'], df_expanded['kp2_y'], df_expanded['kp3_x'], df_expanded['kp3_y'],
-                 df_expanded['kp4_x'], df_expanded['kp4_y'], df_expanded['kp5_x'], df_expanded['kp5_y'],
-                 df_expanded['kp6_x'], df_expanded['kp6_y'], df_expanded['kp7_x'], df_expanded['kp7_y'],
-                 df_expanded['kp8_x'], df_expanded['kp8_y'], self.wing_result['scale'], self.wing_result['area']],
-                axis=1, keys=['path', 'kp1_x', 'kp1_y', 'kp2_x', 'kp2_y', 'kp3_x', 'kp3_y', 'kp4_x', 'kp4_y', 'kp5_x',
-                              'kp5_y', 'kp6_x', 'kp6_y', 'kp7_x', 'kp7_y', 'kp8_x', 'kp8_y', 'scale', 'area'])
+                    [self.wing_result['path'], dims['w'], dims['h'],
+                    df_expanded['kp1_x'], df_expanded['kp1_y'],
+                    df_expanded['kp2_x'], df_expanded['kp2_y'], df_expanded['kp3_x'], df_expanded['kp3_y'],
+                    df_expanded['kp4_x'], df_expanded['kp4_y'], df_expanded['kp5_x'], df_expanded['kp5_y'],
+                    df_expanded['kp6_x'], df_expanded['kp6_y'], df_expanded['kp7_x'], df_expanded['kp7_y'],
+                    df_expanded['kp8_x'], df_expanded['kp8_y'], self.wing_result['scale'], self.wing_result['area']],
+                    axis=1, keys=['path', 'img_width', 'img_height', 'kp1_x', 'kp1_y', 'kp2_x', 'kp2_y', 'kp3_x',
+                    'kp3_y', 'kp4_x', 'kp4_y', 'kp5_x', 'kp5_y', 'kp6_x', 'kp6_y', 'kp7_x', 'kp7_y', 'kp8_x', 'kp8_y', 'scale', 'area'])
             # df_expanded.sort("path")
             df_expanded.to_csv(path, mode='w', index=False)
 
@@ -360,6 +281,16 @@ class WingNet(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
         if not filename:
             return self.check_if_file_exists(file, extention, message)
         return filename
+
+
+    def normed_to_pixel_coords(self, kpts, img_size):
+        kpts[0::2] *= img_size[0]
+        kpts[1::2] *= img_size[1]
+        return kpts
+
+    def pixel_to_normed_coords(self, kpts, img_size):
+        kpts[0::2] /= (img_size[1]*1.0)
+        kpts[1::2] /= (img_size[0]*1.0)
 
 
 def main():
