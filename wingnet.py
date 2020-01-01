@@ -42,6 +42,7 @@ class WingNet(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
 
         self.scene = wing_view.WingView(callback=self.update_kpts_callback)
         self.wingview_layout.addWidget(self.scene)
+        self.update_feature_size()
 
         self.menuBar.setNativeMenuBar(False)
         self.actionSet_Scale.triggered.connect(self.add_scale)
@@ -54,10 +55,10 @@ class WingNet(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
         self.actionAdd_Wings.triggered.connect(self.browse_folders)
         self.actionSave_Project.triggered.connect(self.save_project_dialog)
         self.actionOpen_Existing_Project.triggered.connect(self.load_project_dialog)
+        self.slider_feature_size.valueChanged.connect(self.update_feature_size)
 
         header = self.tableWidget.horizontalHeader()
         header.setSectionResizeMode(0, QtWidgets.QHeaderView.Stretch)
-        header.setSectionResizeMode(1, QtWidgets.QHeaderView.ResizeToContents)
 
         # self.load_project(self.autosave_path)
 
@@ -142,14 +143,14 @@ class WingNet(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
         self.update_table()
 
     def resize_image(self):
-        self.image_current_size = (self.slider_image_size.value(), self.slider_image_size.value())
-        self.selection_changed()
+        pass
+       # self.image_current_size = (self.slider_image_size.value(), self.slider_image_size.value())
+       # self.selection_changed()
 
     def image_selected_key_event(self, e):
         self.tableWidget.keyPressEvent(e)
 
     def square_distance_centroid(self, points, norm_factor):
-        print(points)
         points[0::2] = np.array(points[0::2]) * norm_factor[0]
         points[1::2] = np.array(points[1::2]) * norm_factor[1]
         pts = [np.array([x, y]) for x, y in zip(points[0::2], points[1::2])]
@@ -242,7 +243,6 @@ class WingNet(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
                     print("Image {} does not exist!".format(img_path))
                     return
             self.wing_result = project
-            print(self.wing_result)
             self.tableWidget.clear()
             for i in range(len(self.wing_result)):
                 self.tableWidget.insertRow(i)
@@ -292,6 +292,10 @@ class WingNet(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
         kpts[0::2] /= (img_size[1]*1.0)
         kpts[1::2] /= (img_size[0]*1.0)
 
+    def update_feature_size(self):
+        feature_size = self.slider_feature_size.value()
+        print("Change feature size to {}".format(feature_size))
+        self.scene.update_feature_size(feature_size*0.002+0.001)
 
 def main():
     app = QtWidgets.QApplication(sys.argv)

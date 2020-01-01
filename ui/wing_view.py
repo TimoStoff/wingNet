@@ -50,12 +50,16 @@ class WingView(FigureCanvas):
                     self.update_kpts()
         self.updateFigure()
 
-    def update_kpts(self):
+    def get_kpts(self):
         kpts = []
         for pt in self.list_points:
             coords = pt.get_coords()
             kpts.extend(coords)
-        self.callback(kpts)
+        return kpts
+
+
+    def update_kpts(self):
+        self.callback(self.get_kpts())
 
 
     def updateImage(self, image_path=None, keypoints=[], parent=None, marker_size=0.02, dpi=100):
@@ -91,10 +95,20 @@ class WingView(FigureCanvas):
 
 
     def updateFigure(self):
-
         """Update the graph. Necessary, to call after each plot"""
-
         self.draw()
+
+    def refresh(self):
+        kpts = self.get_kpts()
+        self.clearFigure()
+        self.axes.imshow(self.img)
+        self.show()
+        self.plotDraggablePoints(keypoints=kpts, size=self.marker_size, img_shape=self.img.shape)
+
+    def update_feature_size(self, marker_size):
+        self.marker_size = marker_size
+        self.refresh()
+
 
 if __name__ == '__main__':
 
