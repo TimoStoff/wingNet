@@ -22,13 +22,13 @@ class WingView(FigureCanvas):
     def __init__(self, image_path=None, keypoints=[], parent=None, marker_size=0.02, dpi=100, callback=None):
 
         self.fig = Figure(figsize=(1, 1), dpi=dpi)
+        self.fig.subplots_adjust(bottom=0, top=1, left=0, right=1)
         self.axes = self.fig.add_subplot(111)
         self.scale = 1.0
         self.xlim = None
         self.ylim = None
 
-        self.axes.grid(False)
-        self.axes.set_axis_off()
+        self.setAxesSettings()
         FigureCanvas.__init__(self, self.fig)
         self.setParent(parent)
         self.callback = callback
@@ -122,8 +122,7 @@ class WingView(FigureCanvas):
     def clearFigure(self):
         """Clear the graph"""
         self.axes.clear()
-        self.axes.grid(False)
-        self.axes.set_axis_off()
+        self.setAxesSettings()
         del(self.list_points[:])
         self.updateFigure()
 
@@ -146,6 +145,10 @@ class WingView(FigureCanvas):
         self.marker_size = marker_size
         self.refresh()
 
+    def setAxesSettings(self):
+        self.axes.grid(False)
+        self.axes.set_axis_off()
+        self.axes.margins(0,0)
 
 if __name__ == '__main__':
 

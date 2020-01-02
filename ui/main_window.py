@@ -3,7 +3,7 @@
 # Form implementation generated from reading ui file 'main_window.ui',
 # licensing of 'main_window.ui' applies.
 #
-# Created: Thu Jan  2 15:32:52 2020
+# Created: Thu Jan  2 16:40:55 2020
 #      by: pyside2-uic  running on PySide2 5.13.1
 #
 # WARNING! All changes made in this file will be lost!
@@ -23,12 +23,12 @@ class Ui_MainWindow(object):
         self.splitter.setObjectName("splitter")
         self.layoutWidget = QtWidgets.QWidget(self.splitter)
         self.layoutWidget.setObjectName("layoutWidget")
-        self.verticalLayout = QtWidgets.QVBoxLayout(self.layoutWidget)
-        self.verticalLayout.setContentsMargins(0, 0, 0, 0)
-        self.verticalLayout.setObjectName("verticalLayout")
+        self.vlayout_image = QtWidgets.QVBoxLayout(self.layoutWidget)
+        self.vlayout_image.setContentsMargins(0, 0, 0, 0)
+        self.vlayout_image.setObjectName("vlayout_image")
         self.wingview_layout = QtWidgets.QVBoxLayout()
         self.wingview_layout.setObjectName("wingview_layout")
-        self.verticalLayout.addLayout(self.wingview_layout)
+        self.vlayout_image.addLayout(self.wingview_layout)
         self.verticalLayout_5 = QtWidgets.QVBoxLayout()
         self.verticalLayout_5.setObjectName("verticalLayout_5")
         self.label_feature_size = QtWidgets.QLabel(self.layoutWidget)
@@ -40,7 +40,7 @@ class Ui_MainWindow(object):
         self.slider_feature_size.setOrientation(QtCore.Qt.Horizontal)
         self.slider_feature_size.setObjectName("slider_feature_size")
         self.verticalLayout_5.addWidget(self.slider_feature_size)
-        self.verticalLayout.addLayout(self.verticalLayout_5)
+        self.vlayout_image.addLayout(self.verticalLayout_5)
         self.verticalLayout_4 = QtWidgets.QVBoxLayout()
         self.verticalLayout_4.setObjectName("verticalLayout_4")
         self.label_image_size = QtWidgets.QLabel(self.layoutWidget)
@@ -51,7 +51,7 @@ class Ui_MainWindow(object):
         self.slider_image_size.setOrientation(QtCore.Qt.Horizontal)
         self.slider_image_size.setObjectName("slider_image_size")
         self.verticalLayout_4.addWidget(self.slider_image_size)
-        self.verticalLayout.addLayout(self.verticalLayout_4)
+        self.vlayout_image.addLayout(self.verticalLayout_4)
         self.tableWidget = QtWidgets.QTableWidget(self.splitter)
         self.tableWidget.setObjectName("tableWidget")
         self.tableWidget.setColumnCount(3)

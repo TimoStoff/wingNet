@@ -4,13 +4,14 @@ from PySide2.QtWidgets import *
 from PySide2 import QtCore, QtWidgets, QtGui
 
 import ui.main_window as main_window
+import ui.fullscreen_window as fullscreen
+import ui.wing_view as wing_view
 import ui.drag as drag_pt
 import deploy_network as wing_net
 import sys, os
 import math
 
 import data_loader.data_loaders as module_data
-import ui.wing_view as wing_view
 
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
@@ -40,6 +41,7 @@ class WingNet(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
         self.model_path = self.check_if_file_exists(self.model_path, "", message="Please Load Model")
         print("Loading model from {}".format(self.model_path))
 
+        self.vlayout_image.setContentsMargins(0, 0, 0, 0)
         self.scene = wing_view.WingView(callback=self.update_kpts_callback)
         self.wingview_layout.addWidget(self.scene)
         self.update_feature_size()
@@ -50,7 +52,6 @@ class WingNet(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
         self.actionExport_CSV.triggered.connect(self.save_csv)
         self.btn_label_wings.setEnabled(False)
         self.btn_label_wings.clicked.connect(self.process_wings)
-        self.btn_fullscreen.clicked.connect(self.fullscreen)
         self.tableWidget.itemSelectionChanged.connect(self.selection_changed)
         self.slider_image_size.valueChanged.connect(self.resize_image)
         self.actionAdd_Wings.triggered.connect(self.browse_folders)
@@ -66,14 +67,6 @@ class WingNet(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
     def update_kpts_callback(self, kpts):
         if len(kpts) == 16:
             self.update_keypoints(kpts)
-
-    def fullscreen(self):
-        print("Entering fullscreen")
-        self.wid = QWidget()
-        self.wid.resize(250, 150)
-        self.wid.setWindowTitle('NewWindow')
-        self.wid.show()
-
 
     def browse_folders(self):
         self.tableWidget.clear()
@@ -301,9 +294,9 @@ class WingNet(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
         kpts[1::2] /= (img_size[0]*1.0)
 
     def update_feature_size(self):
+        feature_size_scale = 0.0002
         feature_size = self.slider_feature_size.value()
-        print("Change feature size to {}".format(feature_size))
-        self.scene.update_feature_size(feature_size*0.002+0.001)
+        self.scene.update_feature_size(feature_size*feature_size_scale+0.001)
 
 def main():
     app = QtWidgets.QApplication(sys.argv)
