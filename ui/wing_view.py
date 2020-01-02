@@ -2,9 +2,11 @@ import sys
 import matplotlib
 matplotlib.use("Qt5Agg")
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 from matplotlib.figure import Figure
 
 from PySide2 import QtWidgets, QtGui
+from PySide2.QtGui import *
 
 import numpy as np
 import cv2 as cv
@@ -21,12 +23,17 @@ class WingView(FigureCanvas):
 
         self.fig = Figure(figsize=(1, 1), dpi=dpi)
         self.axes = self.fig.add_subplot(111)
+        self.scale = 1.0
+        self.xlim = None
+        self.ylim = None
 
         self.axes.grid(False)
         self.axes.set_axis_off()
         FigureCanvas.__init__(self, self.fig)
         self.setParent(parent)
         self.callback = callback
+        self.toolbar = NavigationToolbar(self, self)
+        self.toolbar.hide()
 
         FigureCanvas.setSizePolicy(self,
                                    QtWidgets.QSizePolicy.Expanding,
@@ -34,8 +41,38 @@ class WingView(FigureCanvas):
         FigureCanvas.updateGeometry(self)
         self.list_points = []
         self.updateImage(image_path=image_path, keypoints=keypoints, marker_size=marker_size, dpi=dpi)
-        self.mpl_connect('button_press_event', self.mouseClick)
+        self.fig.canvas.mpl_connect('button_press_event', self.mouseClick)
+        self.fig.canvas.mpl_connect('scroll_event', self.wheelEvent)
 
+    def wheelEvent(self, event, base_scale=1.2):
+        # get the current x and y limits
+        cur_xlim = self.axes.get_xlim()
+        cur_ylim = self.axes.get_ylim()
+        # set the range
+        cur_xrange = (cur_xlim[1] - cur_xlim[0]) * .5
+        cur_yrange = (cur_ylim[1] - cur_ylim[0]) * .5
+        position = event.pos()
+        gpos = event.globalPos()
+        xdata = position.x()  # get event x location
+        ydata = position.y()  # get event y location
+
+        modifiers = QtWidgets.QApplication.keyboardModifiers()
+        if modifiers == Qt.ControlModifier:
+            # do your processing 
+            delta = event.angleDelta().y()
+            if delta > 0:
+                self.scale = 1.0/base_scale
+            elif delta <= 0:
+                self.scale = base_scale
+            else:
+                self.scale = 1.0
+        self.axes.set_xlim([xdata - cur_xrange*self.scale,
+            xdata + cur_xrange*self.scale])
+        self.axes.set_ylim([ydata - cur_yrange*self.scale,
+            ydata + cur_yrange*self.scale])
+        self.xlim = self.axes.get_xlim()
+        self.ylim = self.axes.get_ylim()
+        self.axes.figure.canvas.draw()
 
     def mouseClick(self, event):
         if event.dblclick:
@@ -96,6 +133,9 @@ class WingView(FigureCanvas):
 
     def updateFigure(self):
         """Update the graph. Necessary, to call after each plot"""
+        if self.ylim is not None and self.xlim is not None:
+            self.axes.set_xlim(self.xlim)
+            self.axes.set_ylim(self.ylim)
         self.draw()
 
     def refresh(self):
