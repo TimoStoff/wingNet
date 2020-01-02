@@ -94,11 +94,22 @@
     <item>
      <layout class="QVBoxLayout" name="verticalLayout_2">
       <item>
-       <widget class="QPushButton" name="btn_label_wings">
-        <property name="text">
-         <string>Compute Keypoints</string>
-        </property>
-       </widget>
+       <layout class="QHBoxLayout" name="horizontalLayout">
+        <item>
+         <widget class="QPushButton" name="btn_fullscreen">
+          <property name="text">
+           <string>Full Screen Mode</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="btn_label_wings">
+          <property name="text">
+           <string>Compute Keypoints</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </item>
       <item>
        <widget class="QProgressBar" name="progressBar">

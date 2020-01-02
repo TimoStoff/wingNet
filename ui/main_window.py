@@ -3,7 +3,7 @@
 # Form implementation generated from reading ui file 'main_window.ui',
 # licensing of 'main_window.ui' applies.
 #
-# Created: Wed Jan  1 16:47:05 2020
+# Created: Thu Jan  2 15:32:52 2020
 #      by: pyside2-uic  running on PySide2 5.13.1
 #
 # WARNING! All changes made in this file will be lost!
@@ -35,6 +35,8 @@ class Ui_MainWindow(object):
         self.label_feature_size.setObjectName("label_feature_size")
         self.verticalLayout_5.addWidget(self.label_feature_size)
         self.slider_feature_size = QtWidgets.QSlider(self.layoutWidget)
+        self.slider_feature_size.setSingleStep(1)
+        self.slider_feature_size.setSliderPosition(20)
         self.slider_feature_size.setOrientation(QtCore.Qt.Horizontal)
         self.slider_feature_size.setObjectName("slider_feature_size")
         self.verticalLayout_5.addWidget(self.slider_feature_size)
@@ -63,9 +65,15 @@ class Ui_MainWindow(object):
         self.verticalLayout_3.addWidget(self.splitter)
         self.verticalLayout_2 = QtWidgets.QVBoxLayout()
         self.verticalLayout_2.setObjectName("verticalLayout_2")
+        self.horizontalLayout = QtWidgets.QHBoxLayout()
+        self.horizontalLayout.setObjectName("horizontalLayout")
+        self.btn_fullscreen = QtWidgets.QPushButton(self.centralwidget)
+        self.btn_fullscreen.setObjectName("btn_fullscreen")
+        self.horizontalLayout.addWidget(self.btn_fullscreen)
         self.btn_label_wings = QtWidgets.QPushButton(self.centralwidget)
         self.btn_label_wings.setObjectName("btn_label_wings")
-        self.verticalLayout_2.addWidget(self.btn_label_wings)
+        self.horizontalLayout.addWidget(self.btn_label_wings)
+        self.verticalLayout_2.addLayout(self.horizontalLayout)
         self.progressBar = QtWidgets.QProgressBar(self.centralwidget)
         self.progressBar.setProperty("value", 0)
         self.progressBar.setObjectName("progressBar")
@@ -116,6 +124,7 @@ class Ui_MainWindow(object):
         self.tableWidget.horizontalHeaderItem(0).setText(QtWidgets.QApplication.translate("MainWindow", "Image Path", None, -1))
         self.tableWidget.horizontalHeaderItem(1).setText(QtWidgets.QApplication.translate("MainWindow", "Wing Area", None, -1))
         self.tableWidget.horizontalHeaderItem(2).setText(QtWidgets.QApplication.translate("MainWindow", "Scale [mm/pixel]", None, -1))
+        self.btn_fullscreen.setText(QtWidgets.QApplication.translate("MainWindow", "Full Screen Mode", None, -1))
         self.btn_label_wings.setText(QtWidgets.QApplication.translate("MainWindow", "Compute Keypoints", None, -1))
         self.menuFile.setTitle(QtWidgets.QApplication.translate("MainWindow", "File", None, -1))
         self.menuTools.setTitle(QtWidgets.QApplication.translate("MainWindow", "Tools", None, -1))

@@ -42,27 +42,24 @@ class WingView(FigureCanvas):
         self.list_points = []
         self.updateImage(image_path=image_path, keypoints=keypoints, marker_size=marker_size, dpi=dpi)
         self.fig.canvas.mpl_connect('button_press_event', self.mouseClick)
-        self.fig.canvas.mpl_connect('scroll_event', self.wheelEvent)
+        self.fig.canvas.mpl_connect('scroll_event', self.scrollMove)
 
-    def wheelEvent(self, event, base_scale=1.2):
+    def scrollMove(self, event, base_scale=1.2):
         # get the current x and y limits
         cur_xlim = self.axes.get_xlim()
         cur_ylim = self.axes.get_ylim()
         # set the range
         cur_xrange = (cur_xlim[1] - cur_xlim[0]) * .5
         cur_yrange = (cur_ylim[1] - cur_ylim[0]) * .5
-        position = event.pos()
-        gpos = event.globalPos()
-        xdata = position.x()  # get event x location
-        ydata = position.y()  # get event y location
+        xdata = event.xdata  # get event x location
+        ydata = event.ydata  # get event y location
 
         modifiers = QtWidgets.QApplication.keyboardModifiers()
         if modifiers == Qt.ControlModifier:
             # do your processing 
-            delta = event.angleDelta().y()
-            if delta > 0:
+            if event.button == 'up':
                 self.scale = 1.0/base_scale
-            elif delta <= 0:
+            elif event.button == 'down':
                 self.scale = base_scale
             else:
                 self.scale = 1.0

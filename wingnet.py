@@ -50,6 +50,7 @@ class WingNet(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
         self.actionExport_CSV.triggered.connect(self.save_csv)
         self.btn_label_wings.setEnabled(False)
         self.btn_label_wings.clicked.connect(self.process_wings)
+        self.btn_fullscreen.clicked.connect(self.fullscreen)
         self.tableWidget.itemSelectionChanged.connect(self.selection_changed)
         self.slider_image_size.valueChanged.connect(self.resize_image)
         self.actionAdd_Wings.triggered.connect(self.browse_folders)
@@ -65,6 +66,13 @@ class WingNet(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
     def update_kpts_callback(self, kpts):
         if len(kpts) == 16:
             self.update_keypoints(kpts)
+
+    def fullscreen(self):
+        print("Entering fullscreen")
+        self.wid = QWidget()
+        self.wid.resize(250, 150)
+        self.wid.setWindowTitle('NewWindow')
+        self.wid.show()
 
 
     def browse_folders(self):
