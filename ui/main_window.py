@@ -3,8 +3,8 @@
 # Form implementation generated from reading ui file 'main_window.ui',
 # licensing of 'main_window.ui' applies.
 #
-# Created: Thu Jan  2 16:40:55 2020
-#      by: pyside2-uic  running on PySide2 5.13.1
+# Created: Thu Jan  2 17:55:43 2020
+#      by: pyside2-uic  running on PySide2 5.9.0~a1
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -67,9 +67,6 @@ class Ui_MainWindow(object):
         self.verticalLayout_2.setObjectName("verticalLayout_2")
         self.horizontalLayout = QtWidgets.QHBoxLayout()
         self.horizontalLayout.setObjectName("horizontalLayout")
-        self.btn_fullscreen = QtWidgets.QPushButton(self.centralwidget)
-        self.btn_fullscreen.setObjectName("btn_fullscreen")
-        self.horizontalLayout.addWidget(self.btn_fullscreen)
         self.btn_label_wings = QtWidgets.QPushButton(self.centralwidget)
         self.btn_label_wings.setObjectName("btn_label_wings")
         self.horizontalLayout.addWidget(self.btn_label_wings)
@@ -124,7 +121,6 @@ class Ui_MainWindow(object):
         self.tableWidget.horizontalHeaderItem(0).setText(QtWidgets.QApplication.translate("MainWindow", "Image Path", None, -1))
         self.tableWidget.horizontalHeaderItem(1).setText(QtWidgets.QApplication.translate("MainWindow", "Wing Area", None, -1))
         self.tableWidget.horizontalHeaderItem(2).setText(QtWidgets.QApplication.translate("MainWindow", "Scale [mm/pixel]", None, -1))
-        self.btn_fullscreen.setText(QtWidgets.QApplication.translate("MainWindow", "Full Screen Mode", None, -1))
         self.btn_label_wings.setText(QtWidgets.QApplication.translate("MainWindow", "Compute Keypoints", None, -1))
         self.menuFile.setTitle(QtWidgets.QApplication.translate("MainWindow", "File", None, -1))
         self.menuTools.setTitle(QtWidgets.QApplication.translate("MainWindow", "Tools", None, -1))

@@ -3,8 +3,8 @@
 # Form implementation generated from reading ui file 'gallery_window.ui',
 # licensing of 'gallery_window.ui' applies.
 #
-# Created: Thu Jan  2 16:40:55 2020
-#      by: pyside2-uic  running on PySide2 5.13.1
+# Created: Thu Jan  2 17:55:43 2020
+#      by: pyside2-uic  running on PySide2 5.9.0~a1
 #
 # WARNING! All changes made in this file will be lost!
 

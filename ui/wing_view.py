@@ -5,7 +5,7 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 from matplotlib.figure import Figure
 
-from PySide2 import QtWidgets, QtGui
+from PySide2 import QtWidgets, QtGui, QtCore
 from PySide2.QtGui import *
 
 import numpy as np
@@ -55,7 +55,7 @@ class WingView(FigureCanvas):
         ydata = event.ydata  # get event y location
 
         modifiers = QtWidgets.QApplication.keyboardModifiers()
-        if modifiers == Qt.ControlModifier:
+        if modifiers == QtCore.Qt.ControlModifier:
             # do your processing 
             if event.button == 'up':
                 self.scale = 1.0/base_scale
