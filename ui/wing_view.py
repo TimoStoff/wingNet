@@ -27,20 +27,21 @@ class WingView(FigureCanvas):
         self.scale = 1.0
         self.xlim = None
         self.ylim = None
+        self.marker_size = marker_size
 
         self.setAxesSettings()
         FigureCanvas.__init__(self, self.fig)
         self.setParent(parent)
         self.callback = callback
         self.toolbar = NavigationToolbar(self, self)
-        self.toolbar.hide()
+#        self.toolbar.hide()
 
         FigureCanvas.setSizePolicy(self,
                                    QtWidgets.QSizePolicy.Expanding,
                                    QtWidgets.QSizePolicy.Expanding)
         FigureCanvas.updateGeometry(self)
         self.list_points = []
-        self.updateImage(image_path=image_path, keypoints=keypoints, marker_size=marker_size, dpi=dpi)
+        self.updateImage(image_path=image_path, keypoints=keypoints, dpi=dpi)
         self.fig.canvas.mpl_connect('button_press_event', self.mouseClick)
         self.fig.canvas.mpl_connect('scroll_event', self.scrollMove)
 
@@ -96,10 +97,9 @@ class WingView(FigureCanvas):
         self.callback(self.get_kpts())
 
 
-    def updateImage(self, image_path=None, keypoints=[], parent=None, marker_size=0.02, dpi=100):
+    def updateImage(self, image_path=None, keypoints=[], parent=None, dpi=100):
         self.clearFigure()
         self.list_points.clear()
-        self.marker_size = marker_size
         if image_path is None:
             img = np.zeros((256, 256))
         else:
@@ -110,7 +110,7 @@ class WingView(FigureCanvas):
         self.img = img
 
         self.show()
-        self.plotDraggablePoints(keypoints=keypoints, size=marker_size, img_shape=img.shape)
+        self.plotDraggablePoints(keypoints=keypoints, size=self.marker_size, img_shape=img.shape)
 
 
     def plotDraggablePoints(self, keypoints, size=0.02, img_shape=(200, 200)):
