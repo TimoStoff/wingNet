@@ -294,7 +294,7 @@ class WingNet(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
         kpts[1::2] /= (img_size[0]*1.0)
 
     def update_feature_size(self):
-        feature_size_scale = 0.0002
+        feature_size_scale = 0.0005
         feature_size = self.slider_feature_size.value()
         self.scene.update_feature_size(feature_size*feature_size_scale+0.001)
 
